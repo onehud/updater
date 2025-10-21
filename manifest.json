@@ -1,0 +1,19 @@
+{
+  "name": "OneHUD",
+  "version": "2.0.1",
+  "new_install_prompt_erase": false,
+  "builds": [
+    {
+      "chipFamily": "ESP32",
+      "parts": [
+        { "path": "firmware/onehud_proxy.bin", "offset": 0 }
+      ]
+    },
+    {
+      "chipFamily": "ESP32-C3",
+      "parts": [
+        { "path": "firmware/onehud.bin", "offset": 0 }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OneHUD Firmware Flasher</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="color-scheme" content="dark light">
+    <meta name="description" content="OneHUD Firmware Flasher - Source code không public. Đừng hỏi.">
+    <meta name="robots" content="noindex, nofollow">
+    <!-- Source code không public. Đừng hỏi. Đây chỉ là tool flash firmware thôi. -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+</head>
+<body>
+    <div class="container">
+        <main class="main-content">
+            <div class="flash-section">
+                <div class="flash-card">
+                    <div class="device-icon">
+                        <i class="fas fa-microchip"></i>
+                    </div>
+                    <h2>Flash Firmware</h2>
+                    <p>Cắm OneHUD vào máy tính và nhấn nút dưới để flash firmware mới nhất</p>
+                    <div class="button-row">
+                        <esp-web-install-button manifest="./manifest.json">
+                            <button slot="activate" class="btn btn-primary btn-large">
+                                <i class="fas fa-bolt btn-icon"></i>
+                                Flash Firmware
+                            </button>
+                            <span slot="unsupported">Trình duyệt này không hỗ trợ. Thử dùng Chrome trên máy tính</span>
+                            <span slot="not-allowed">Cần sử dụng HTTPS để flash firmware</span>
+                        </esp-web-install-button>
+                    </div>
+                </div>
+            </div>
+            
+            <section class="instructions">
+                <h2><i class="fas fa-list-ol"></i> Hướng dẫn sử dụng</h2>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h3>Cắm thiết bị</h3>
+                            <p>Sử dụng cáp USB truyền dữ liệu cắm trực tiếp OneHUD vào máy tính</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h3>Flash firmware</h3>
+                            <p>Nhấn nút "Flash Firmware" và chọn cổng COM khi được yêu cầu. Cổng COM thường sẽ bắt đầu bằng "USB Serial (cu.xxx)"</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h3>Hoàn tất</h3>
+                            <p>Đợi quá trình flash hoàn tất và thiết bị sẽ tự động khởi động lại</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section class="driver-section">
+                <h2><i class="fas fa-download"></i> Cài đặt Driver</h2>
+                <div class="driver-info">
+                    <p><strong>Lưu ý:</strong> Nếu không thấy thiết bị USB Serial trong danh sách, bạn cần cài driver:</p>
+                    <div class="driver-links">
+                        <a href="https://www.silabs.com/developer-tools/usb-to-uart-bridge-vcp-drivers?tab=downloads" target="_blank" rel="noopener" class="driver-link">
+                            <i class="fas fa-laptop driver-icon"></i>
+                            <div>
+                                <strong>Silicon Labs CP210x</strong>
+                                <small>Windows & Mac</small>
+                            </div>
+                        </a>
+                        <a href="https://www.wch.cn/downloads/CH343SER_ZIP.html" target="_blank" rel="noopener" class="driver-link">
+                            <i class="fab fa-windows driver-icon"></i>
+                            <div>
+                                <strong>WCH CH340/CH341</strong>
+                                <small>Windows</small>
+                            </div>
+                        </a>
+                        <a href="https://www.wch.cn/downloads/CH34XSER_MAC_ZIP.html" target="_blank" rel="noopener" class="driver-link">
+                            <i class="fab fa-apple driver-icon"></i>
+                            <div>
+                                <strong>WCH CH340/CH341</strong>
+                                <small>Mac</small>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <footer>
+            <p>&copy; <span id="currentYear"></span> OneHUD Team</p>
+            <p class="build-info">Build: <span id="buildTimestamp">2025-10-22 11:37:32</span></p>
+        </footer>
+    </div>
+    
+    <script src="assets/js/main.js"></script>
+</body>
+</html>
