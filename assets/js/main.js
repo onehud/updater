@@ -7,6 +7,24 @@ document.addEventListener('DOMContentLoaded', function() {
         currentYearElement.textContent = new Date().getFullYear();
     }
     
+    // Convert Unix timestamp to readable format
+    const buildTimestampElement = document.getElementById('buildTimestamp');
+    if (buildTimestampElement) {
+        const unixTimestamp = buildTimestampElement.textContent;
+        if (unixTimestamp && !isNaN(unixTimestamp)) {
+            const date = new Date(parseInt(unixTimestamp) * 1000);
+            const formattedDate = date.toLocaleString('vi-VN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            buildTimestampElement.textContent = formattedDate;
+        }
+    }
+    
     // Add click handlers for device cards
     const deviceCards = document.querySelectorAll('.device-card');
     deviceCards.forEach(card => {
