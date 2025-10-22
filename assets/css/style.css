@@ -358,8 +358,9 @@ footer {
 .build-info {
     margin-top: 0.5rem;
     font-size: 0.8rem;
-    color: var(--gray-500);
+    color: var(--primary);
     font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-weight: 600;
 }
 
 #buildTimestamp {
@@ -518,7 +519,7 @@ footer {
     }
     
     .build-info {
-        color: var(--gray-400);
+        color: var(--primary);
     }
     
     #buildTimestamp {
