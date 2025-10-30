@@ -95,13 +95,74 @@
         </footer>
     </div>
     
+    <!-- SCRIPTS -->
+    <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
     <script type="module">
-import { ESPLoader, Transport } from "https://unpkg.com/esptool-js/lib/index.js";
-import registerPage from './assets/js/register.js';
-if (registerPage && typeof registerPage.init === 'function') {
-   registerPage.init({ ESPLoader, Transport });
-}
-</script>
+    // DOM Ready
+    const registerBtn = document.getElementById("registerBtn");
+    const emailInput = document.getElementById("email");
+    const statusMessage = document.getElementById("statusMessage");
+    const currentYearElement = document.getElementById('currentYear');
+    if (currentYearElement) currentYearElement.textContent = new Date().getFullYear();
+
+    function showStatus(msg, type = 'info') {
+      statusMessage.textContent = msg;
+      statusMessage.className = 'status-message status-' + type;
+      statusMessage.style.display = 'block';
+    }
+
+    function validateEmail(email) {
+      const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return re.test(email);
+    }
+
+    async function getDeviceMac() {
+      try {
+        const port = await navigator.serial.requestPort();
+        await port.open({ baudRate: 115200 });
+        const ESPLoader = window["esp-web-tools"].ESPLoader;
+        const loader = new ESPLoader(port, { log: ()=>{} });
+        await loader.main_fn();
+        const mac = await loader.macAddr();
+        await loader.disconnect();
+        await port.close();
+        return mac;
+      } catch (e) {
+        throw new Error('Không thể nhận diện thiết bị!');
+      }
+    }
+
+    async function sendTelegram(email, mac) {
+      const botToken = '8464026703:AAFd_w4fL09HFaZ3s_LI81tLJJhyvt0whWs';
+      const chatId = '7158639072';
+      const message = `🆕 Đăng ký mới!\n\n📧 Email: ${email}\n🔐 MAC: ${mac}\n⏰ Thời gian: ${new Date().toLocaleString('vi-VN')}`;
+      const apiUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'HTML' })
+      });
+      if (!response.ok) throw new Error('Không thể gửi dữ liệu!');
+    }
+
+    registerBtn.addEventListener('click', async function () {
+      const email = emailInput.value.trim();
+      if (!validateEmail(email)) {
+        showStatus('❌ Vui lòng nhập email hợp lệ!', 'error');
+        return;
+      }
+      registerBtn.disabled = true;
+      try {
+        const mac = await getDeviceMac();
+        await sendTelegram(email, mac);
+        showStatus('✅ Thông báo đã gửi. Chúng tôi sẽ phản hồi qua email sau khi xác nhận.', 'success');
+        emailInput.disabled = true;
+      } catch (e) {
+        showStatus('❌ Có lỗi xảy ra, vui lòng thử lại.', 'error');
+        registerBtn.disabled = false;
+      }
+    });
+    </script>
     <script src="assets/js/register.js"></script>
 </body>
 </html>
