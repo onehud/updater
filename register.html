@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Đăng ký sử dụng Firmware</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="color-scheme" content="dark light">
+    <meta name="description" content="Đăng ký sử dụng firmware OneHUD">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <script src="https://unpkg.com/esptool-js@0.4.3/bundle.js"></script>
+</head>
+<body>
+    <div class="container">
+        <main class="main-content">
+            <div class="flash-section">
+                <div class="flash-card">
+                    <div class="device-icon">
+                        <i class="fas fa-rocket"></i>
+                    </div>
+                    <h2>Đăng ký sử dụng Firmware</h2>
+                    <p>Đăng ký để nhận quyền truy cập và sử dụng firmware chính thức</p>
+                    
+                    <div class="register-container">
+                        <div class="register-form">
+                            <div class="form-group">
+                                <label for="email">
+                                    <i class="fas fa-envelope"></i> Email nhận thông tin
+                                </label>
+                                <input 
+                                    type="email" 
+                                    id="email" 
+                                    placeholder="name@example.com" 
+                                    required
+                                    class="form-input"
+                                >
+                            </div>
+                            
+                            <div class="form-note">
+                                <p>💡 Sau khi thanh toán thành công qua QR code bên phải, vui lòng nhấn nút bên dưới để thông báo</p>
+                            </div>
+                            
+                            <div class="button-row">
+                                <button id="registerBtn" class="btn btn-primary btn-large">
+                                    <i class="fas fa-check-circle btn-icon"></i>
+                                    Thông báo đã chuyển tiền
+                                </button>
+                            </div>
+                            
+                            <div id="statusMessage" class="status-message"></div>
+                        </div>
+                        
+                        <div class="payment-section">
+                            <h3><i class="fas fa-credit-card"></i> Thanh toán</h3>
+                            <p class="payment-info">Quét mã QR để thanh toán phí đăng ký</p>
+                            <div class="qrcode-container">
+                                <img src="qrcode.jpg" alt="QR Code Thanh Toán" class="qrcode-image">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <section class="instructions">
+                <h2><i class="fas fa-list-ol"></i> Hướng dẫn đăng ký</h2>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h3>Nhập email</h3>
+                            <p>Điền địa chỉ email để nhận link firmware và thông tin cập nhật</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h3>Thanh toán</h3>
+                            <p>Quét mã QR để thanh toán phí đăng ký sử dụng firmware</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h3>Thông báo đã chuyển tiền</h3>
+                            <p>Sau khi thanh toán thành công, nhấn "Thông báo đã chuyển tiền". Chúng tôi sẽ kiểm tra và gửi link firmware cho bạn qua email</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+        </main>
+        
+        <footer>
+            <p>&copy; <span id="currentYear"></span> OneHUD Team</p>
+            <p class="build-info">Version: <span id="appVersion">2.0.2</span></p>
+        </footer>
+    </div>
+    
+    <script src="assets/js/register.js"></script>
+</body>
+</html>
+

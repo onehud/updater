@@ -98,7 +98,7 @@ body {
     text-align: center;
     backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.3);
-    max-width: 450px;
+    max-width: 1024px; /* widened to avoid text clipping */
     width: 100%;
     position: relative;
     overflow: hidden;
