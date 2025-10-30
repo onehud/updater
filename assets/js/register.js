@@ -70,10 +70,10 @@ async function readMacAddress() {
         await port.open({ baudRate: 115200 });
         
         // Create transport
-        const transport = new esptoolPackage.Transport(port);
+        const transport = new esptool.Transport(port);
         
         // Create ESPLoader
-        espLoader = new esptoolPackage.ESPLoader({
+        espLoader = new esptool.ESPLoader({
             transport: transport,
             baudrate: 115200,
             romBaudrate: 115200,
