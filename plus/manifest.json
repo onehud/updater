@@ -1,0 +1,14 @@
+{
+  "name": "OneHUD Plus",
+  "version": "2.0.3",
+  "new_install_prompt_erase": false,
+  "builds": [
+    {
+      "chipFamily": "ESP32",
+      "parts": [
+        { "path": "../firmware/onehud_plus.bin", "offset": 0 }
+      ]
+    }
+  ]
+}
+
