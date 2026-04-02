@@ -269,6 +269,45 @@
       color: #8ab4f8;
     }
 
+    /* ── COMMUNITY CARD ── */
+    .community-card {
+      background: var(--surface);
+      border: 1px solid rgba(255, 193, 7, .45);
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 40px;
+    }
+
+    .community-card h2 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .community-card p {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+
+    .community-card b {
+      color: #ffd54f;
+    }
+
+    .btn-warning {
+      border: 1px solid #ffc107;
+      color: #ffd54f;
+      background: rgba(255, 193, 7, .08);
+    }
+
+    .btn-warning:hover {
+      background: rgba(255, 193, 7, .16);
+      box-shadow: 0 0 16px rgba(255, 193, 7, .22);
+      transform: translateY(-2px);
+    }
+
     /* ── STEPS CARD ── */
     .steps-card {
       background: var(--surface);
@@ -477,6 +516,17 @@
       </div>
     </div>
 
+    <div class="community-card">
+      <h2><i class="fas fa-bullhorn"></i> Thông báo phiên bản & hỗ trợ</h2>
+      <p><b>Lưu ý:</b> Đây là phiên bản đầu tiên, hiện tại chỉ hỗ trợ OneHUD. Bản Plus/Colorful dự kiến sẽ được release trong khoảng 1-2 tuần tới.</p>
+      <p>Nếu gặp lỗi trong quá trình sử dụng, vui lòng report tại Google Group để team theo dõi và hỗ trợ nhanh hơn.</p>
+      <div class="button-row">
+        <a href="https://groups.google.com/g/onehud" target="_blank" rel="noopener" class="btn btn-warning">
+          <i class="fas fa-users"></i> Report lỗi trên Google Group
+        </a>
+      </div>
+    </div>
+
     <div class="section-title">Flash Firmware</div>
     <div class="flash-card">
       <h2>OneNav</h2>
@@ -544,7 +594,7 @@
   <footer>
     &copy; <span id="currentYear"></span> OneHUD Team &nbsp;·&nbsp;
     v<span id="appVersion">1.0.0</span> &nbsp;·&nbsp;
-    <span id="deployTime">2026-04-02 10:09:20</span>
+    <span id="deployTime">2026-04-02 10:17:18</span>
   </footer>
 
   <script>document.getElementById('currentYear').textContent = new Date().getFullYear();</script>
