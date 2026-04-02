@@ -63,3 +63,8 @@ node_modules/
 tmp/
 temp/
 *.pem
+.omc/
+
+onehud_deploy
+
+onehud_deploy.pub

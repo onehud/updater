@@ -1,0 +1,13 @@
+{
+  "name": "OneNav",
+  "version": "1.0.0",
+  "new_install_prompt_erase": false,
+  "builds": [
+    {
+      "chipFamily": "ESP32-C3",
+      "parts": [
+        { "path": "../firmware/onenav.bin", "offset": 0 }
+      ]
+    }
+  ]
+}
