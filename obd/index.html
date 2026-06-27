@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="OneOBD HUD - Hiển thị dữ liệu OBDII qua giao thức ELM327.">
+  <title>OneOBD ELM327</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+  <style>
+    :root {
+      --bg: #070b12;
+      --surface: #0e1520;
+      --surface2: #141d2e;
+      --border: #1e2d45;
+      --accent: #24c26a;
+      --accent2: #83e4ab;
+      --text: #e8edf5;
+      --muted: #6b7f99;
+      --font: 'Space Grotesk', sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── HEADER ── */
+    header {
+      padding: 48px 48px 32px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(135deg, #0e1520 0%, #070b12 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    header::before {
+      content: '';
+      position: absolute;
+      top: -60px;
+      right: -60px;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(36, 194, 106, .09) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    header::after {
+      content: '';
+      position: absolute;
+      bottom: -40px;
+      left: 200px;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(131, 228, 171, .08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .header-tag {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      opacity: .8;
+    }
+
+    header h1 {
+      font-size: clamp(28px, 4vw, 48px);
+      font-weight: 700;
+      letter-spacing: -1px;
+      line-height: 1.1;
+      background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    header p {
+      color: var(--muted);
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    .header-meta {
+      display: flex;
+      gap: 16px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .header-meta>span {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      padding: 4px 12px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: rgba(255, 255, 255, .02);
+    }
+
+    .header-meta>span b {
+      color: var(--accent);
+    }
+
+    .lang-switch {
+      display: inline-flex;
+      position: absolute;
+      top: 24px;
+      right: 48px;
+      z-index: 2;
+      gap: 6px;
+      margin-top: 0;
+      padding: 4px;
+      background: rgba(255, 255, 255, .03);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    .lang-btn {
+      min-width: 44px;
+      height: 30px;
+      padding: 0 10px;
+      border-radius: 7px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .lang-btn:hover {
+      color: var(--text);
+    }
+
+    .lang-btn.active {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: rgba(36, 194, 106, .12);
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 16px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color .2s;
+    }
+
+    .back-link:hover {
+      color: var(--accent);
+    }
+
+    /* ── LAYOUT ── */
+    main {
+      padding: 40px 48px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    /* ── SECTION TITLE ── */
+    .section-title {
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--accent);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── FLASH CARD ── */
+    .flash-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .2s;
+      margin-bottom: 40px;
+    }
+
+    .flash-card:hover {
+      border-color: rgba(36, 194, 106, .32);
+    }
+
+    .flash-card h2 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .flash-card>p {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 28px;
+      line-height: 1.6;
+    }
+
+    /* ── BUTTONS ── */
+    .button-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 20px;
+      height: 44px;
+      border-radius: 8px;
+      font-family: var(--mono);
+      font-weight: 600;
+      font-size: 13px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all .2s;
+      white-space: nowrap;
+      letter-spacing: .3px;
+    }
+
+    .btn-primary {
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      background: rgba(36, 194, 106, .08);
+    }
+
+    .btn-primary:hover {
+      background: rgba(36, 194, 106, .16);
+      box-shadow: 0 0 16px rgba(36, 194, 106, .22);
+      transform: translateY(-2px);
+    }
+
+    /* ── INFO CARD ── */
+    .info-card {
+      background: var(--surface);
+      border: 1px solid rgba(36, 194, 106, .35);
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 22px;
+    }
+
+    .info-card h2 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .info-card p {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 6px;
+    }
+
+    .info-card p b {
+      color: #83e4ab;
+    }
+
+    /* ── STEPS CARD ── */
+    .steps-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 32px;
+      transition: border-color .2s;
+      margin-bottom: 40px;
+    }
+
+    .steps-card:hover {
+      border-color: rgba(36, 194, 106, .22);
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 18px;
+      background: var(--surface2);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      transition: all .15s;
+    }
+
+    .step:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .step-number {
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--mono);
+      font-size: 13px;
+      flex-shrink: 0;
+      background: rgba(36, 194, 106, .08);
+    }
+
+    .step-content h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .step-content p {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* ── DRIVER CARD ── */
+    .driver-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 32px;
+      transition: border-color .2s;
+      margin-bottom: 40px;
+    }
+
+    .driver-card:hover {
+      border-color: rgba(36, 194, 106, .22);
+    }
+
+    .driver-note {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    .driver-note b {
+      color: #ffd700;
+    }
+
+    .driver-links {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+    }
+
+    .driver-link {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      text-decoration: none;
+      color: var(--text);
+      transition: all .15s;
+    }
+
+    .driver-link:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .driver-link i {
+      font-size: 20px;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .driver-link strong {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .driver-link small {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 32px 48px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      font-family: var(--mono);
+      text-align: center;
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--muted);
+    }
+
+    @media (max-width:640px) {
+      header {
+        padding: 32px 20px 24px;
+      }
+
+      .lang-switch {
+        top: 16px;
+        right: 20px;
+      }
+
+      main {
+        padding: 24px 20px;
+      }
+
+      footer {
+        padding: 24px 20px;
+      }
+
+      .button-row {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div class="header-tag">// firmware flasher</div>
+    <h1>OneOBD</h1>
+    <div class="header-meta">
+      <span><span id="txtVersion">Version</span> <b><span id="firmwareVersion">1.0.1</span></b></span>
+      <span>ELM327</span>
+    </div>
+    <div class="lang-switch" aria-label="Language switch">
+      <button type="button" class="lang-btn active" data-lang="vi">VI</button>
+      <button type="button" class="lang-btn" data-lang="en">EN</button>
+    </div>
+    <a href="../index.html" class="back-link"><i class="fas fa-arrow-left"></i> <span id="txtBackHome">Quay lại trang chính</span></a>
+  </header>
+
+  <main>
+
+    <div class="info-card">
+      <h2 id="txtInfoTitle"><i class="fas fa-car"></i> OneOBD — HUD hiển thị dữ liệu ô tô</h2>
+      <p id="txtInfoDesc">OneOBD nhận dữ liệu OBDII qua ELM327 và hiển thị thông số vận hành theo thời gian thực ngay trên HUD.</p>
+    </div>
+
+    <div class="section-title" id="txtSectionFlash">Flash Firmware</div>
+    <div class="flash-card">
+      <h2 id="txtFlashTitle">OneOBD HUD</h2>
+      <p id="txtFlashDesc">Cắm thiết bị vào máy tính qua cáp USB, sau đó nhấn nút bên dưới để flash firmware mới nhất.</p>
+      <div class="button-row">
+        <esp-web-install-button manifest="./manifest.json">
+          <button slot="activate" class="btn btn-primary">
+            <i class="fas fa-bolt"></i> <span id="txtFlashBtn">Flash Firmware</span>
+          </button>
+          <span slot="unsupported" id="txtUnsupported">Trình duyệt không hỗ trợ. Dùng Chrome trên máy tính</span>
+          <span slot="not-allowed" id="txtNotAllowed">Cần HTTPS để flash firmware</span>
+        </esp-web-install-button>
+      </div>
+    </div>
+
+    <div class="section-title" id="txtSectionGuide">Hướng dẫn sử dụng</div>
+    <div class="steps-card">
+      <div class="steps">
+        <div class="step">
+          <div class="step-number"><i class="fas fa-plug"></i></div>
+          <div class="step-content">
+            <h3 id="txtStep1Title">Cắm ELM327 vào cổng OBD2</h3>
+            <p id="txtStep1Desc">Gắn thiết bị ELM327 vào cổng OBD2 của xe để cấp dữ liệu cho HUD.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number"><i class="fas fa-power-off"></i></div>
+          <div class="step-content">
+            <h3 id="txtStep2Title">Bật HUD lên</h3>
+            <p id="txtStep2Desc">Khởi động HUD sau khi đã cắm ELM327.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number"><i class="fas fa-link"></i></div>
+          <div class="step-content">
+            <h3 id="txtStep3Title">Tự động kết nối</h3>
+            <p id="txtStep3Desc">HUD sẽ tự kết nối với thiết bị ELM327, không cần thao tác ghép nối thủ công.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number"><i class="fas fa-chart-line"></i></div>
+          <div class="step-content">
+            <h3 id="txtStep4Title">Hiển thị dữ liệu trên HUD</h3>
+            <p id="txtStep4Desc">Dữ liệu OBDII realtime sẽ hiển thị trực tiếp trên màn hình HUD.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    &copy; <span id="currentYear"></span> OneHUD Team &nbsp;·&nbsp;
+    v<span id="appVersion">1.0.1</span> &nbsp;·&nbsp;
+    <span id="deployTime">2026-06-27 18:00:12</span>
+  </footer>
+
+  <script>
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+    const translations = {
+      vi: {
+        htmlLang: 'vi',
+        pageTitle: 'OneOBD ELM327',
+        pageDescription: 'OneOBD HUD - Hiển thị dữ liệu OBDII qua giao thức ELM327.',
+        txtVersion: 'Version',
+        txtBackHome: 'Quay lại trang chính',
+        txtInfoTitle: 'OneOBD — HUD hiển thị dữ liệu ô tô',
+        txtInfoDesc: 'OneOBD nhận dữ liệu OBDII qua ELM327 và hiển thị thông số vận hành theo thời gian thực ngay trên HUD.',
+        txtSectionFlash: 'Flash Firmware',
+        txtFlashTitle: 'OneOBD HUD',
+        txtFlashDesc: 'Cắm thiết bị vào máy tính qua cáp USB, sau đó nhấn nút bên dưới để flash firmware mới nhất.',
+        txtFlashBtn: 'Flash Firmware',
+        txtUnsupported: 'Trình duyệt không hỗ trợ. Dùng Chrome trên máy tính',
+        txtNotAllowed: 'Cần HTTPS để flash firmware',
+        txtSectionGuide: 'Hướng dẫn sử dụng',
+        txtStep1Title: 'Cắm ELM327 vào cổng OBD2',
+        txtStep1Desc: 'Gắn thiết bị ELM327 vào cổng OBD2 của xe để cấp dữ liệu cho HUD.',
+        txtStep2Title: 'Bật HUD lên',
+        txtStep2Desc: 'Khởi động HUD sau khi đã cắm ELM327.',
+        txtStep3Title: 'Tự động kết nối',
+        txtStep3Desc: 'HUD sẽ tự kết nối với thiết bị ELM327, không cần thao tác ghép nối thủ công.',
+        txtStep4Title: 'Hiển thị dữ liệu trên HUD',
+        txtStep4Desc: 'Dữ liệu OBDII realtime sẽ hiển thị trực tiếp trên màn hình HUD.'
+      },
+      en: {
+        htmlLang: 'en',
+        pageTitle: 'OneOBD ELM327',
+        pageDescription: 'OneOBD HUD - Display OBDII data via ELM327 protocol.',
+        txtVersion: 'Version',
+        txtBackHome: 'Back to home',
+        txtInfoTitle: 'OneOBD - Automotive Data Display HUD',
+        txtInfoDesc: 'OneOBD receives OBDII data over ELM327 and shows real-time driving metrics directly on the HUD.',
+        txtSectionFlash: 'Flash Firmware',
+        txtFlashTitle: 'OneOBD HUD',
+        txtFlashDesc: 'Connect the device to your computer via USB cable, then click the button below to flash the latest firmware.',
+        txtFlashBtn: 'Flash Firmware',
+        txtUnsupported: 'Browser not supported. Please use Chrome on desktop.',
+        txtNotAllowed: 'HTTPS is required to flash firmware',
+        txtSectionGuide: 'Usage Guide',
+        txtStep1Title: 'Plug ELM327 into the OBD2 port',
+        txtStep1Desc: 'Insert the ELM327 device into your vehicle OBD2 port to provide data for the HUD.',
+        txtStep2Title: 'Power on the HUD',
+        txtStep2Desc: 'Turn on the HUD after ELM327 is connected.',
+        txtStep3Title: 'Auto connection',
+        txtStep3Desc: 'The HUD will automatically connect to the ELM327 device without manual pairing.',
+        txtStep4Title: 'Display data on HUD',
+        txtStep4Desc: 'Real-time OBDII data will be shown directly on the HUD display.'
+      }
+    };
+
+    function applyLanguage(lang) {
+      const selectedLang = translations[lang] ? lang : 'vi';
+      const dict = translations[selectedLang];
+
+      document.documentElement.lang = dict.htmlLang;
+      document.title = dict.pageTitle;
+
+      const descriptionMeta = document.querySelector('meta[name="description"]');
+      if (descriptionMeta) {
+        descriptionMeta.setAttribute('content', dict.pageDescription);
+      }
+
+      Object.keys(dict).forEach((key) => {
+        if (key === 'htmlLang' || key === 'pageTitle' || key === 'pageDescription') {
+          return;
+        }
+        const el = document.getElementById(key);
+        if (el) {
+          el.textContent = dict[key];
+        }
+      });
+
+      document.querySelectorAll('.lang-btn').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.lang === selectedLang);
+      });
+
+      localStorage.setItem('oneobd_lang', selectedLang);
+    }
+
+    const savedLanguage = localStorage.getItem('oneobd_lang') || 'vi';
+    applyLanguage(savedLanguage);
+
+    document.querySelectorAll('.lang-btn').forEach((btn) => {
+      btn.addEventListener('click', () => applyLanguage(btn.dataset.lang));
+    });
+  </script>
+</body>
+
+</html>
