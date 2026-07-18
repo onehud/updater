@@ -1,14 +1,13 @@
 {
-  "name": "OneHUD Plus - Colorful",
+  "name": "OneHUD Pro",
   "version": "2.0.7",
   "new_install_prompt_erase": false,
   "builds": [
     {
       "chipFamily": "ESP32",
       "parts": [
-        { "path": "../firmware/onehud_plus.bin", "offset": 0 }
+        { "path": "../firmware/onehud_pro.bin", "offset": 0 }
       ]
     }
   ]
 }
-
