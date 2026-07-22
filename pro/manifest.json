@@ -8,6 +8,12 @@
       "parts": [
         { "path": "../firmware/onehud_pro.bin", "offset": 0 }
       ]
+    },
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        { "path": "../firmware/onehud_pro_2.bin", "offset": 0 }
+      ]
     }
   ]
 }
