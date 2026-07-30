@@ -5,6 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>OneHUD Firmware Flasher</title>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-2VN4M585CR"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-2VN4M585CR');
+</script>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -86,6 +95,26 @@
     border-radius:4px; background:rgba(255,255,255,.02);
   }
   .header-meta > span b { color:var(--accent); }
+  .header-qr {
+    position:absolute; right:48px; top:50%; transform:translateY(-50%);
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    text-decoration:none; z-index:1;
+  }
+  .header-qr svg {
+    width:96px; height:96px; display:block;
+    background:#fff; padding:8px; border-radius:8px;
+    shape-rendering:crispEdges;
+  }
+  .header-qr span {
+    font-family:var(--mono); font-size:11px; color:var(--muted);
+    letter-spacing:1px;
+  }
+  .header-qr small {
+    font-size:11px; color:var(--muted); text-align:center;
+    max-width:160px; line-height:1.5;
+  }
+  .header-qr small b { color:var(--accent); }
+  .header-qr:hover span { color:var(--accent); }
 
   /* ── LAYOUT ── */
   main { padding:40px 48px; max-width:960px; margin:0 auto; }
@@ -163,6 +192,56 @@
     background:rgba(255,107,53,.06);
   }
   .btn-obd:hover { background:rgba(255,107,53,.12); box-shadow:0 0 16px rgba(255,107,53,.15); }
+  .btn-shopee {
+    border-color:#ee4d2d; color:#ee4d2d;
+    background:rgba(238,77,45,.06);
+  }
+  .btn-shopee:hover { background:rgba(238,77,45,.12); box-shadow:0 0 16px rgba(238,77,45,.15); }
+
+  /* ── DEVICE GRID ── */
+  .device-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(210px,1fr));
+    gap:16px; margin-bottom:24px;
+  }
+  .device-card {
+    border:1px solid var(--border); border-radius:12px;
+    background:var(--surface2); overflow:hidden;
+    display:flex; flex-direction:column;
+    transition:all .2s;
+  }
+  .device-card:hover {
+    transform:translateY(-3px);
+    border-color:var(--card-color,var(--accent));
+    box-shadow:0 8px 24px rgba(0,0,0,.35);
+  }
+  .device-img {
+    aspect-ratio:1/1; background:#fff;
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden;
+  }
+  .device-img img { width:100%; height:100%; object-fit:cover; display:block; }
+  a.device-img, .device-img.clickable { text-decoration:none; cursor:pointer; }
+  a.device-img img, .device-img.clickable img { transition:transform .25s; }
+  a.device-img:hover img, .device-img.clickable:hover img { transform:scale(1.04); }
+  .device-img.no-img {
+    background:linear-gradient(135deg,var(--surface) 0%,var(--surface2) 100%);
+    color:var(--card-color,var(--accent)); font-size:42px; opacity:.9;
+  }
+  .device-body {
+    padding:16px; display:flex; flex-direction:column; gap:12px; flex:1;
+  }
+  .device-body h3 {
+    font-size:14px; font-weight:600; color:var(--text);
+    font-family:var(--mono); letter-spacing:.3px;
+  }
+  .device-body h3 i { color:var(--card-color,var(--accent)); margin-right:6px; }
+  .device-actions {
+    margin-top:auto; display:flex; flex-direction:column; gap:8px;
+  }
+  .device-actions .btn { width:100%; height:38px; font-size:12px; padding:0 12px; }
+  .device-actions esp-web-install-button { display:block; width:100%; }
+  .device-img.two { display:grid; grid-template-columns:1fr 1fr; gap:2px; background:var(--border); }
 
   /* ── MAC RESULT ── */
   #mac-result {
@@ -246,6 +325,14 @@
   /* ── RESPONSIVE ── */
   @media (max-width:640px) {
     header { padding:32px 20px 24px; }
+    .header-qr {
+      position:static; transform:none; margin-top:20px;
+      display:grid; grid-template-columns:auto 1fr;
+      column-gap:14px; row-gap:4px; align-items:center;
+    }
+    .header-qr svg { grid-row:1/3; width:84px; height:84px; }
+    .header-qr span { align-self:end; }
+    .header-qr small { max-width:none; text-align:left; align-self:start; }
     main { padding:24px 20px; }
     footer { padding:24px 20px; }
     .button-row { flex-direction:column; }
@@ -262,6 +349,11 @@
     <span style="border-color:#ff6b35; background:rgba(255,107,53,.08); color:#ff6b35;">Version <b style="color:#ff6b35;"><span id="firmwareVersion">2.0.8</span></b></span>
 <span>Chrome / Edge only</span>
   </div>
+  <a class="header-qr" data-track="telegram_click" href="https://t.me/tieumee" target="_blank" rel="noopener">
+    <svg viewBox="0 0 25 25"><path stroke="#0a0f16" d="M0 0.5h7m2 0h1m4 0h1m3 0h7m-25 1h1m5 0h1m4 0h2m1 0h1m1 0h1m1 0h1m5 0h1m-25 1h1m1 0h3m1 0h1m2 0h5m1 0h1m2 0h1m1 0h3m1 0h1m-25 1h1m1 0h3m1 0h1m1 0h1m1 0h1m1 0h3m1 0h1m1 0h1m1 0h3m1 0h1m-25 1h1m1 0h3m1 0h1m5 0h3m3 0h1m1 0h3m1 0h1m-25 1h1m5 0h1m1 0h2m1 0h2m1 0h1m1 0h1m1 0h1m5 0h1m-25 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-17 1h1m5 0h1m1 0h1m-16 1h2m3 0h1m2 0h3m3 0h2m1 0h2m1 0h1m-22 1h1m2 0h1m1 0h1m4 0h2m3 0h2m1 0h1m2 0h1m1 0h2m-25 1h3m1 0h3m1 0h1m1 0h1m2 0h1m1 0h1m3 0h4m1 0h1m-24 1h1m7 0h1m2 0h1m1 0h1m3 0h2m1 0h1m-22 1h3m1 0h4m2 0h5m1 0h1m1 0h1m5 0h1m-22 1h1m1 0h1m2 0h3m1 0h1m2 0h2m1 0h2m3 0h2m-25 1h3m1 0h3m1 0h2m1 0h2m1 0h3m4 0h2m1 0h1m-23 1h2m3 0h2m1 0h1m2 0h1m2 0h2m1 0h3m-22 1h3m2 0h2m2 0h2m4 0h6m2 0h1m-16 1h1m1 0h1m1 0h2m1 0h2m3 0h1m3 0h1m-25 1h7m4 0h4m1 0h1m1 0h1m1 0h1m3 0h1m-25 1h1m5 0h1m2 0h1m3 0h1m1 0h2m3 0h1m-21 1h1m1 0h3m1 0h1m3 0h2m1 0h8m3 0h1m-25 1h1m1 0h3m1 0h1m3 0h1m1 0h6m2 0h1m1 0h2m-24 1h1m1 0h3m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m2 0h1m1 0h3m1 0h2m-25 1h1m5 0h1m1 0h2m3 0h2m1 0h2m1 0h2m-21 1h7m2 0h1m1 0h2m2 0h2m1 0h1m2 0h1m2 0h1"/></svg>
+    <span>@tieumee</span>
+    <small><b>Quét mã ngay</b> — nơi duy nhất nhận thông báo firmware mới và hỗ trợ trực tiếp từ OneHUD</small>
+  </a>
 </header>
 
 <main>
@@ -270,26 +362,86 @@
   <div class="flash-card">
     <h2>Chọn thiết bị</h2>
     <p>Cắm OneHUD vào máy tính qua cáp USB, sau đó nhấn nút tương ứng với dòng thiết bị của bạn.</p>
+    <div class="device-grid">
+
+      <div class="device-card" style="--card-color:#00d4ff;">
+        <div class="device-img clickable" data-track="flash_click:onehud" onclick="document.querySelector('esp-web-install-button button[slot=activate]').click()"><img src="assets/images/onehud.webp" alt="OneHUD" loading="lazy"></div>
+        <div class="device-body">
+          <h3><i class="fas fa-bolt"></i>OneHUD</h3>
+          <div class="device-actions">
+            <esp-web-install-button manifest="./manifest.json">
+              <button slot="activate" data-track="flash_click:onehud" class="btn btn-primary">
+                <i class="fas fa-bolt"></i> Flash firmware
+              </button>
+              <span slot="unsupported">Trình duyệt không hỗ trợ. Dùng Chrome trên máy tính</span>
+              <span slot="not-allowed">Cần HTTPS để flash firmware</span>
+            </esp-web-install-button>
+            <a href="https://s.shopee.vn/6VMfHyvLFr" target="_blank" rel="noopener" class="btn btn-shopee" data-track="shopee_click:onehud">
+              <i class="fas fa-cart-shopping"></i> Mua trên Shopee
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="device-card" style="--card-color:#00e5a0;">
+        <a href="pro/index.html" class="device-img" data-track="open_device:pro"><img src="assets/images/onehud_pro.webp" alt="OneHUD Pro" loading="lazy"></a>
+        <div class="device-body">
+          <h3><i class="fas fa-bolt"></i>OneHUD Pro</h3>
+          <div class="device-actions">
+            <a href="pro/index.html" class="btn btn-green" data-track="open_device:pro">
+              <i class="fas fa-bolt"></i> Flash firmware
+            </a>
+            <a href="https://s.shopee.vn/2BDg83sxWI" target="_blank" rel="noopener" class="btn btn-shopee" data-track="shopee_click:pro">
+              <i class="fas fa-cart-shopping"></i> Mua trên Shopee
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="device-card" style="--card-color:#ff6b35;">
+        <a href="obd/index.html" class="device-img" data-track="open_device:obd"><img src="assets/images/oneobd.webp" alt="OneOBD" loading="lazy"></a>
+        <div class="device-body">
+          <h3><i class="fas fa-car"></i>OneOBD</h3>
+          <div class="device-actions">
+            <a href="obd/index.html" class="btn btn-obd" data-track="open_device:obd">
+              <i class="fas fa-bolt"></i> Flash firmware
+            </a>
+            <a href="https://s.shopee.vn/9V0GrWIqtj" target="_blank" rel="noopener" class="btn btn-shopee" data-track="shopee_click:obd">
+              <i class="fas fa-cart-shopping"></i> Mua trên Shopee
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="device-card" style="--card-color:#f59e0b;">
+        <a href="plus/index.html" class="device-img two" data-track="open_device:plus">
+          <img src="assets/images/plus_1.webp" alt="OneHUD Plus" loading="lazy">
+          <img src="assets/images/plus_2.webp" alt="OneHUD Colorful" loading="lazy">
+        </a>
+        <div class="device-body">
+          <h3><i class="fas fa-bolt"></i>Plus | Colorful</h3>
+          <div class="device-actions">
+            <a href="plus/index.html" class="btn btn-amber" data-track="open_device:plus">
+              <i class="fas fa-bolt"></i> Flash firmware
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="device-card" style="--card-color:#4285f4;">
+        <a href="nav/index.html" class="device-img no-img" data-track="open_device:nav"><i class="fas fa-location-arrow"></i></a>
+        <div class="device-body">
+          <h3><i class="fas fa-location-arrow"></i>OneNav</h3>
+          <div class="device-actions">
+            <a href="nav/index.html" class="btn btn-google" data-track="open_device:nav">
+              <i class="fas fa-bolt"></i> Flash firmware
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
     <div class="button-row">
-      <esp-web-install-button manifest="./manifest.json">
-        <button slot="activate" class="btn btn-primary">
-          <i class="fas fa-bolt"></i> OneHUD
-        </button>
-        <span slot="unsupported">Trình duyệt không hỗ trợ. Dùng Chrome trên máy tính</span>
-        <span slot="not-allowed">Cần HTTPS để flash firmware</span>
-      </esp-web-install-button>
-      <a href="plus/index.html" class="btn btn-amber">
-        <i class="fas fa-bolt"></i> Plus | Colorful
-      </a>
-      <a href="pro/index.html" class="btn btn-green">
-        <i class="fas fa-bolt"></i> Pro
-      </a>
-      <a href="nav/index.html" class="btn btn-google">
-        <i class="fas fa-bolt"></i> OneNav
-      </a>
-      <a href="obd/index.html" class="btn btn-obd">
-        <i class="fas fa-car"></i> OneOBD
-      </a>
       <button id="btn-mac" class="btn btn-purple" onclick="readMacAddress()">
         <i class="fas fa-microchip"></i> Lấy địa chỉ MAC
       </button>
@@ -540,5 +692,14 @@
   };
 </script>
 
+<script>
+  document.addEventListener('click', function (e) {
+    const el = e.target.closest('[data-track]');
+    if (el && window.gtag) {
+      const parts = el.dataset.track.split(':');
+      gtag('event', parts[0], parts[1] ? { device: parts[1] } : {});
+    }
+  });
+</script>
 </body>
 </html>

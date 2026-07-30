@@ -7,6 +7,15 @@
   <meta name="robots" content="noindex, nofollow">
   <meta name="description" content="OneNav Firmware Flasher - Source code không public. Đừng hỏi.">
   <title>OneNav Firmware Flasher</title>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-2VN4M585CR"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-2VN4M585CR');
+</script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link
     href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
@@ -537,7 +546,7 @@
       <p>Cắm thiết bị vào máy tính qua cáp USB, sau đó nhấn nút bên dưới để flash firmware mới nhất.</p>
       <div class="button-row">
         <esp-web-install-button manifest="./manifest.json">
-          <button slot="activate" class="btn btn-primary">
+          <button slot="activate" data-track="flash_click:nav" class="btn btn-primary">
             <i class="fas fa-bolt"></i> Flash Firmware
           </button>
           <span slot="unsupported">Trình duyệt không hỗ trợ. Dùng Chrome trên máy tính</span>
@@ -616,6 +625,15 @@
   </footer>
 
   <script>document.getElementById('currentYear').textContent = new Date().getFullYear();</script>
+<script>
+  document.addEventListener('click', function (e) {
+    const el = e.target.closest('[data-track]');
+    if (el && window.gtag) {
+      const parts = el.dataset.track.split(':');
+      gtag('event', parts[0], parts[1] ? { device: parts[1] } : {});
+    }
+  });
+</script>
 </body>
 
 </html>

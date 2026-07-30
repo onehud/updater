@@ -6,6 +6,15 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="description" content="OneHUD Pro Firmware Flasher - Source code không public. Đừng hỏi.">
 <title>OneHUD Pro Firmware Flasher</title>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-2VN4M585CR"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-2VN4M585CR');
+</script>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -57,6 +66,22 @@
     padding:4px 12px; border:1px solid var(--border); border-radius:4px; background:rgba(255,255,255,.02);
   }
   .header-meta > span b { color:var(--accent); }
+  .header-product {
+    position:absolute; right:48px; top:50%; transform:translateY(-50%);
+    display:flex; flex-direction:column; align-items:center; gap:10px; z-index:1;
+  }
+  .header-product img {
+    width:120px; height:120px; object-fit:cover; border-radius:12px;
+    border:1px solid var(--border); display:block;
+  }
+  .header-product .btn-shopee {
+    display:inline-flex; align-items:center; gap:6px;
+    font-family:var(--mono); font-size:11px; font-weight:600;
+    color:#ee4d2d; border:1px solid #ee4d2d; border-radius:6px;
+    padding:6px 12px; text-decoration:none; background:rgba(238,77,45,.06);
+    transition:all .2s; white-space:nowrap;
+  }
+  .header-product .btn-shopee:hover { background:rgba(238,77,45,.12); box-shadow:0 0 16px rgba(238,77,45,.15); }
   .back-link {
     display:inline-flex; align-items:center; gap:6px; margin-top:16px;
     font-family:var(--mono); font-size:11px; color:var(--muted);
@@ -148,6 +173,7 @@
 
   @media (max-width:640px) {
     header { padding:32px 20px 24px; }
+    .header-product { position:static; transform:none; margin-top:20px; align-items:flex-start; }
     main { padding:24px 20px; }
     footer { padding:24px 20px; }
     .button-row { flex-direction:column; }
@@ -165,6 +191,12 @@
     <span>Pro</span>
   </div>
   <a href="../index.html" class="back-link"><i class="fas fa-arrow-left"></i> Quay lại trang chính</a>
+  <div class="header-product">
+    <img src="../assets/images/onehud_pro.webp" alt="OneHUD Pro">
+    <a href="https://s.shopee.vn/2BDg83sxWI" target="_blank" rel="noopener" class="btn-shopee" data-track="shopee_click:pro">
+      <i class="fas fa-cart-shopping"></i> Mua trên Shopee
+    </a>
+  </div>
 </header>
 
 <main>
@@ -175,7 +207,7 @@
     <p>Cắm OneHUD Pro vào máy tính qua cáp USB, sau đó nhấn nút bên dưới để flash firmware mới nhất.</p>
     <div class="button-row">
       <esp-web-install-button manifest="./manifest.json">
-        <button slot="activate" class="btn btn-primary">
+        <button slot="activate" data-track="flash_click:pro" class="btn btn-primary">
           <i class="fas fa-bolt"></i> Flash Firmware
         </button>
         <span slot="unsupported">Trình duyệt không hỗ trợ. Dùng Chrome trên máy tính</span>
@@ -239,5 +271,14 @@
 </footer>
 
 <script>document.getElementById('currentYear').textContent = new Date().getFullYear();</script>
+<script>
+  document.addEventListener('click', function (e) {
+    const el = e.target.closest('[data-track]');
+    if (el && window.gtag) {
+      const parts = el.dataset.track.split(':');
+      gtag('event', parts[0], parts[1] ? { device: parts[1] } : {});
+    }
+  });
+</script>
 </body>
 </html>

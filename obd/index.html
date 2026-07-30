@@ -7,6 +7,15 @@
   <meta name="robots" content="noindex, nofollow">
   <meta name="description" content="OneOBD HUD - Hiển thị dữ liệu OBDII qua giao thức ELM327.">
   <title>OneOBD ELM327</title>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-2VN4M585CR"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-2VN4M585CR');
+</script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link
     href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
@@ -118,6 +127,49 @@
 
     .header-meta>span b {
       color: var(--accent);
+    }
+
+    .header-product {
+      position: absolute;
+      right: 48px;
+      top: calc(50% + 18px); /* né lang-switch góc phải trên */
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      z-index: 1;
+    }
+
+    .header-product img {
+      width: 110px;
+      height: 110px;
+      object-fit: cover;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      display: block;
+    }
+
+    .header-product .btn-shopee {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      color: #ee4d2d;
+      border: 1px solid #ee4d2d;
+      border-radius: 6px;
+      padding: 6px 12px;
+      text-decoration: none;
+      background: rgba(238, 77, 45, .06);
+      transition: all .2s;
+      white-space: nowrap;
+    }
+
+    .header-product .btn-shopee:hover {
+      background: rgba(238, 77, 45, .12);
+      box-shadow: 0 0 16px rgba(238, 77, 45, .15);
     }
 
     .lang-switch {
@@ -465,6 +517,13 @@
         right: 20px;
       }
 
+      .header-product {
+        position: static;
+        transform: none;
+        margin-top: 20px;
+        align-items: flex-start;
+      }
+
       main {
         padding: 24px 20px;
       }
@@ -498,6 +557,12 @@
       <button type="button" class="lang-btn" data-lang="en">EN</button>
     </div>
     <a href="../index.html" class="back-link"><i class="fas fa-arrow-left"></i> <span id="txtBackHome">Quay lại trang chính</span></a>
+    <div class="header-product">
+      <img src="../assets/images/oneobd.webp" alt="OneOBD">
+      <a href="https://s.shopee.vn/9V0GrWIqtj" target="_blank" rel="noopener" class="btn-shopee" data-track="shopee_click:obd">
+        <i class="fas fa-cart-shopping"></i> <span id="txtBuyShopee">Mua trên Shopee</span>
+      </a>
+    </div>
   </header>
 
   <main>
@@ -513,7 +578,7 @@
       <p id="txtFlashDesc">Cắm thiết bị vào máy tính qua cáp USB, sau đó nhấn nút bên dưới để flash firmware mới nhất.</p>
       <div class="button-row">
         <esp-web-install-button manifest="./manifest.json">
-          <button slot="activate" class="btn btn-primary">
+          <button slot="activate" data-track="flash_click:obd" class="btn btn-primary">
             <i class="fas fa-bolt"></i> <span id="txtFlashBtn">Flash Firmware</span>
           </button>
           <span slot="unsupported" id="txtUnsupported">Trình duyệt không hỗ trợ. Dùng Chrome trên máy tính</span>
@@ -574,6 +639,7 @@
         pageDescription: 'OneOBD HUD - Hiển thị dữ liệu OBDII qua giao thức ELM327.',
         txtVersion: 'Version',
         txtBackHome: 'Quay lại trang chính',
+        txtBuyShopee: 'Mua trên Shopee',
         txtInfoTitle: 'OneOBD — HUD hiển thị dữ liệu ô tô',
         txtInfoDesc: 'OneOBD nhận dữ liệu OBDII qua ELM327 và hiển thị thông số vận hành theo thời gian thực ngay trên HUD.',
         txtSectionFlash: 'Flash Firmware',
@@ -598,6 +664,7 @@
         pageDescription: 'OneOBD HUD - Display OBDII data via ELM327 protocol.',
         txtVersion: 'Version',
         txtBackHome: 'Back to home',
+        txtBuyShopee: 'Buy on Shopee',
         txtInfoTitle: 'OneOBD - Automotive Data Display HUD',
         txtInfoDesc: 'OneOBD receives OBDII data over ELM327 and shows real-time driving metrics directly on the HUD.',
         txtSectionFlash: 'Flash Firmware',
@@ -654,6 +721,15 @@
       btn.addEventListener('click', () => applyLanguage(btn.dataset.lang));
     });
   </script>
+<script>
+  document.addEventListener('click', function (e) {
+    const el = e.target.closest('[data-track]');
+    if (el && window.gtag) {
+      const parts = el.dataset.track.split(':');
+      gtag('event', parts[0], parts[1] ? { device: parts[1] } : {});
+    }
+  });
+</script>
 </body>
 
 </html>
