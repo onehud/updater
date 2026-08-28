@@ -320,6 +320,18 @@
       transform: translateY(-2px);
     }
 
+    .btn-preview {
+      border: 1px solid #e8a33d;
+      color: #e8a33d;
+      background: rgba(232, 163, 61, .08);
+    }
+
+    .btn-preview:hover {
+      background: rgba(232, 163, 61, .16);
+      box-shadow: 0 0 16px rgba(232, 163, 61, .22);
+      transform: translateY(-2px);
+    }
+
     /* ── INFO CARD ── */
     .info-card {
       background: var(--surface);
@@ -584,6 +596,13 @@
           <span slot="unsupported" id="txtUnsupported">Trình duyệt không hỗ trợ. Dùng Chrome trên máy tính</span>
           <span slot="not-allowed" id="txtNotAllowed">Cần HTTPS để flash firmware</span>
         </esp-web-install-button>
+        <esp-web-install-button manifest="./manifest_preview.json">
+          <button slot="activate" data-track="flash_click:obd_preview" class="btn btn-preview">
+            <i class="fas fa-flask"></i> <span id="txtFlashPreviewBtn">Flash Preview</span>
+          </button>
+          <span slot="unsupported"></span>
+          <span slot="not-allowed"></span>
+        </esp-web-install-button>
       </div>
     </div>
 
@@ -646,6 +665,7 @@
         txtFlashTitle: 'OneOBD HUD',
         txtFlashDesc: 'Cắm thiết bị vào máy tính qua cáp USB, sau đó nhấn nút bên dưới để flash firmware mới nhất.',
         txtFlashBtn: 'Flash Firmware',
+        txtFlashPreviewBtn: 'Flash bản Preview',
         txtUnsupported: 'Trình duyệt không hỗ trợ. Dùng Chrome trên máy tính',
         txtNotAllowed: 'Cần HTTPS để flash firmware',
         txtSectionGuide: 'Hướng dẫn sử dụng',
@@ -671,6 +691,7 @@
         txtFlashTitle: 'OneOBD HUD',
         txtFlashDesc: 'Connect the device to your computer via USB cable, then click the button below to flash the latest firmware.',
         txtFlashBtn: 'Flash Firmware',
+        txtFlashPreviewBtn: 'Flash Preview Build',
         txtUnsupported: 'Browser not supported. Please use Chrome on desktop.',
         txtNotAllowed: 'HTTPS is required to flash firmware',
         txtSectionGuide: 'Usage Guide',
