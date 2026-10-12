@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#070b12">
+<title>Cài đặt HUD · OneHUD</title>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-2VN4M585CR"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-2VN4M585CR');
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root {
+    --bg:      #070b12;
+    --surface: #0e1520;
+    --surface2:#141d2e;
+    --border:  #1e2d45;
+    --accent:  #00d4ff;
+    --green:   #00e5a0;
+    --yellow:  #ffd700;
+    --red:     #ff4757;
+    --text:    #e8edf5;
+    --muted:   #6b7f99;
+    --font:    'Space Grotesk', sans-serif;
+    --mono:    'JetBrains Mono', monospace;
+    --ease:    cubic-bezier(.22,1,.36,1);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body {
+    background:var(--bg); color:var(--text); font-family:var(--font);
+    min-height:100vh; overflow-x:hidden; -webkit-tap-highlight-color:transparent;
+  }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:3px; border-radius:6px; }
+
+  /* ── HEADER (same pattern as product pages) ── */
+  header {
+    padding:48px 48px 32px; border-bottom:1px solid var(--border);
+    background:linear-gradient(135deg,#0e1520 0%,#070b12 100%);
+    position:relative; overflow:hidden;
+  }
+  header::before {
+    content:''; position:absolute; top:-60px; right:-60px; width:300px; height:300px;
+    background:radial-gradient(circle,rgba(0,212,255,.08) 0%,transparent 70%); pointer-events:none;
+  }
+  .header-tag {
+    font-family:var(--mono); font-size:11px; color:var(--accent);
+    letter-spacing:3px; text-transform:uppercase; margin-bottom:12px; opacity:.8;
+  }
+  header h1 { font-size:clamp(28px,4vw,48px); font-weight:700; letter-spacing:-1px; line-height:1.1; }
+  header h1 span { color:var(--accent); }
+  .header-meta { display:flex; gap:10px; margin-top:20px; flex-wrap:wrap; }
+  .header-meta > span {
+    font-family:var(--mono); font-size:12px; color:var(--muted);
+    padding:4px 12px; border:1px solid var(--border); border-radius:4px; background:rgba(255,255,255,.02);
+  }
+  .header-meta > span b { color:var(--accent); font-weight:600; }
+  .back-link {
+    display:inline-flex; align-items:center; gap:6px; margin-top:16px; min-height:32px;
+    font-family:var(--mono); font-size:11px; color:var(--muted); text-decoration:none; transition:color .2s;
+  }
+  .back-link:hover { color:var(--accent); }
+
+  /* ── LAYOUT ── */
+  main { padding:8px 48px 0; max-width:640px; margin:0 auto; }
+  .section-title {
+    font-size:11px; font-family:var(--mono); color:var(--accent);
+    letter-spacing:3px; text-transform:uppercase; margin:36px 0 14px;
+    display:flex; align-items:center; gap:12px;
+  }
+  .section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+  .panel { background:var(--surface); border:1px solid var(--border); border-radius:14px; }
+
+  /* ── CONNECTION ── */
+  .link-panel { padding:24px; display:grid; gap:18px; }
+  .link-state { display:flex; align-items:center; gap:14px; }
+  .link-icon {
+    width:48px; height:48px; border-radius:12px; flex-shrink:0;
+    display:grid; place-items:center; font-size:20px;
+    border:1px solid var(--border); background:var(--surface2); color:var(--muted);
+    transition:color .3s, border-color .3s, background .3s;
+  }
+  .link-state strong { display:block; font-size:16px; font-weight:600; }
+  .link-state small { display:block; font-family:var(--mono); font-size:12px; color:var(--muted); margin-top:2px; }
+  body[data-mode="connecting"] .link-icon { color:var(--accent); border-color:rgba(0,212,255,.4); }
+  body[data-mode="connecting"] .link-icon i { animation:pulse 1.2s var(--ease) infinite; }
+  body[data-mode="editing"] .link-icon,
+  body[data-mode="saving"] .link-icon { color:var(--green); border-color:rgba(0,229,160,.4); background:rgba(0,229,160,.06); }
+  @keyframes pulse { 50% { opacity:.35; } }
+  .prep { display:grid; gap:10px; list-style:none; counter-reset:prep; }
+  .prep li {
+    counter-increment:prep; display:grid; grid-template-columns:28px 1fr; gap:10px;
+    font-size:13px; color:var(--muted); line-height:1.5;
+  }
+  .prep li::before {
+    content:counter(prep); width:24px; height:24px; border-radius:6px;
+    display:grid; place-items:center; font-family:var(--mono); font-size:11px; font-weight:700;
+    color:var(--accent); border:1px solid rgba(0,212,255,.35); background:rgba(0,212,255,.06);
+  }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display:inline-flex; align-items:center; justify-content:center; gap:10px;
+    min-height:48px; padding:0 20px; border-radius:10px; width:100%;
+    font-family:var(--mono); font-weight:600; font-size:13px; letter-spacing:.3px;
+    text-decoration:none; cursor:pointer; white-space:nowrap;
+    border:1px solid var(--border); color:var(--muted); background:var(--surface2);
+    transition:background .2s, box-shadow .2s, color .2s, border-color .2s, transform .2s var(--ease);
+  }
+  .btn:active:not(:disabled) { transform:scale(.98); }
+  .btn:disabled { opacity:.45; cursor:default; }
+  .btn-primary { border-color:var(--accent); color:var(--accent); background:rgba(0,212,255,.08); }
+  .btn-primary:hover:not(:disabled) { background:rgba(0,212,255,.14); box-shadow:0 0 18px rgba(0,212,255,.18); }
+  .btn-solid { border-color:var(--accent); color:#04121a; background:var(--accent); }
+  .btn-solid:hover:not(:disabled) { box-shadow:0 0 22px rgba(0,212,255,.3); }
+  .btn-ghost { width:auto; min-height:40px; padding:0 14px; font-size:12px; }
+  .btn-ghost:hover:not(:disabled) { color:var(--text); border-color:var(--muted); }
+
+  /* ── NOTICE ── */
+  .notice {
+    margin-top:14px; padding:12px 16px; border-radius:10px; font-size:13px; line-height:1.55;
+    border:1px solid var(--border); background:var(--surface2); color:var(--text);
+    display:flex; gap:10px; align-items:flex-start; overflow-wrap:anywhere;
+  }
+  .notice:empty { display:none; }
+  .notice::before { font-family:'Font Awesome 6 Free'; font-weight:900; content:'\f05a'; color:var(--accent); }
+  .notice[data-tone="ok"] { border-color:rgba(0,229,160,.35); background:rgba(0,229,160,.06); }
+  .notice[data-tone="ok"]::before { content:'\f00c'; color:var(--green); }
+  .notice[data-tone="error"] { border-color:rgba(255,71,87,.4); background:rgba(255,71,87,.07); }
+  .notice[data-tone="error"]::before { content:'\f071'; color:var(--red); }
+
+  /* ── UNSUPPORTED ── */
+  .unsupported { padding:24px; display:grid; gap:14px; }
+  .unsupported h2 { font-size:18px; font-weight:600; }
+  .unsupported p { font-size:14px; color:var(--muted); line-height:1.6; }
+  .hint { font-size:13px; color:var(--muted); line-height:1.55; }
+
+  /* ── SETTINGS ── */
+  fieldset { border:0; min-width:0; }
+  .group { padding:4px 20px; }
+  .row {
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    min-height:60px; padding:10px 0; border-top:1px solid var(--border);
+  }
+  .row:first-child { border-top:0; }
+  .row > span { font-size:15px; }
+  .row > span small { display:block; font-size:12px; color:var(--muted); margin-top:2px; line-height:1.45; }
+  .stack { padding:16px 0; border-top:1px solid var(--border); display:grid; gap:12px; }
+  .stack:first-child { border-top:0; }
+  .stack-head { display:flex; justify-content:space-between; align-items:baseline; font-size:15px; }
+  .stack-head output { font-family:var(--mono); font-size:15px; color:var(--accent); font-variant-numeric:tabular-nums; }
+
+  /* switch */
+  input[role="switch"] {
+    appearance:none; -webkit-appearance:none; flex-shrink:0; cursor:pointer;
+    width:52px; height:30px; border-radius:30px; position:relative;
+    background:var(--surface2); border:1px solid var(--border);
+    transition:background .25s var(--ease), border-color .25s;
+  }
+  input[role="switch"]::after {
+    content:''; position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%;
+    background:var(--muted); transition:transform .25s var(--ease), background .25s;
+  }
+  input[role="switch"]:checked { background:rgba(0,212,255,.18); border-color:var(--accent); }
+  input[role="switch"]:checked::after { transform:translateX(22px); background:var(--accent); }
+  input[role="switch"]:disabled { cursor:default; opacity:.5; }
+
+  /* segmented */
+  .segments { display:grid; grid-template-columns:repeat(auto-fit,minmax(0,1fr)); gap:6px; padding:4px; border-radius:10px; background:var(--bg); border:1px solid var(--border); }
+  .segments label { position:relative; }
+  .segments input { position:absolute; opacity:0; inset:0; margin:0; cursor:pointer; }
+  .segments span {
+    display:flex; align-items:center; justify-content:center; gap:6px; min-height:44px; padding:0 6px;
+    border-radius:7px; font-family:var(--mono); font-size:12px; font-weight:600; color:var(--muted);
+    border:1px solid transparent; transition:background .2s, color .2s, border-color .2s; text-align:center;
+  }
+  .segments input:checked + span { color:var(--accent); background:rgba(0,212,255,.1); border-color:rgba(0,212,255,.45); }
+  .segments input:focus-visible + span { outline:2px solid var(--accent); outline-offset:2px; }
+  .segments.cols-2 { grid-template-columns:repeat(2,1fr); }
+  .segments.cols-4 { grid-template-columns:repeat(4,1fr); }
+
+  /* slider */
+  input[type="range"] { -webkit-appearance:none; appearance:none; width:100%; height:32px; background:transparent; cursor:pointer; }
+  input[type="range"]::-webkit-slider-runnable-track {
+    height:6px; border-radius:6px; border:1px solid var(--border);
+    background:linear-gradient(to right,var(--accent) var(--fill,50%),var(--surface2) var(--fill,50%));
+  }
+  input[type="range"]::-moz-range-track { height:6px; border-radius:6px; background:var(--surface2); border:1px solid var(--border); }
+  input[type="range"]::-moz-range-progress { height:6px; border-radius:6px; background:var(--accent); }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance:none; width:24px; height:24px; margin-top:-10px; border-radius:50%;
+    background:var(--accent); border:4px solid var(--bg); box-shadow:0 0 0 1px var(--accent);
+  }
+  input[type="range"]::-moz-range-thumb { width:18px; height:18px; border-radius:50%; background:var(--accent); border:4px solid var(--bg); }
+
+  /* stepper */
+  .stepper { display:flex; align-items:center; gap:4px; padding:4px; border-radius:10px; background:var(--bg); border:1px solid var(--border); }
+  .stepper button {
+    width:44px; height:40px; border-radius:7px; border:0; cursor:pointer;
+    background:var(--surface2); color:var(--text); font-size:14px; transition:background .2s, color .2s;
+  }
+  .stepper button:hover:not(:disabled) { color:var(--accent); }
+  .stepper button:disabled { opacity:.35; cursor:default; }
+  .stepper output { min-width:64px; text-align:center; font-family:var(--mono); font-weight:600; color:var(--accent); font-variant-numeric:tabular-nums; }
+
+  .warn { display:flex; gap:8px; font-size:12px; color:var(--muted); line-height:1.5; }
+  .warn i { color:var(--yellow); margin-top:2px; }
+
+  /* ── SAVE BAR ── */
+  .savebar {
+    position:sticky; bottom:0; z-index:5; margin:28px -48px 0;
+    padding:14px 48px calc(14px + env(safe-area-inset-bottom));
+    background:var(--bg); border-top:1px solid var(--border);
+    display:flex; align-items:center; gap:16px;
+  }
+  .savebar p { flex:1; font-family:var(--mono); font-size:12px; color:var(--muted); }
+  .savebar p.dirty { color:var(--yellow); }
+  .savebar .btn { width:auto; min-width:180px; }
+
+  footer {
+    padding:32px 48px; border-top:1px solid var(--border); margin-top:40px;
+    color:var(--muted); font-size:12px; font-family:var(--mono); text-align:center;
+  }
+  form + footer { margin-top:0; border-top:0; }
+
+  @media (max-width:640px) {
+    header { padding:32px 16px 24px; }
+    main { padding:0 16px 0; }
+    .group { padding:4px 16px; }
+    .link-panel, .unsupported { padding:20px 16px; }
+    .savebar { margin:24px -16px 0; padding:12px 16px calc(12px + env(safe-area-inset-bottom)); }
+    .savebar .btn { min-width:0; flex:1.4; }
+    footer { padding:24px 16px; }
+  }
+  @media (prefers-reduced-motion:reduce) { * { transition:none !important; animation:none !important; } }
+</style>
+</head>
+<body data-mode="disconnected">
+
+<header>
+  <div class="header-tag">// hud settings</div>
+  <h1>Cài đặt <span>HUD</span></h1>
+  <div class="header-meta">
+    <span><i class="fab fa-bluetooth-b"></i> Bluetooth</span>
+    <span>Android: <b>Chrome</b></span>
+    <span>iPhone: <b>Bluefy</b></span>
+  </div>
+  <a href="../index.html" class="back-link"><i class="fas fa-arrow-left"></i> Quay lại trang chính</a>
+</header>
+
+<main>
+  <section id="unsupported" hidden>
+    <div class="section-title">Trình duyệt</div>
+    <div class="panel unsupported">
+      <h2>Trình duyệt chưa hỗ trợ Bluetooth</h2>
+      <p id="unsupportedText"></p>
+      <div id="iosHelp" hidden style="display:grid; gap:10px;">
+        <a class="btn btn-primary" href="https://apps.apple.com/app/bluefy-web-ble-browser/id1492822055" target="_blank" rel="noopener noreferrer"><i class="fab fa-app-store-ios"></i> Cài Bluefy trên App Store</a>
+        <button id="copy" type="button" class="btn"><i class="fas fa-link"></i> Sao chép link trang này</button>
+        <p class="hint">Mở Bluefy, dán link vào thanh địa chỉ rồi kết nối HUD.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="connection">
+    <div class="section-title">Kết nối</div>
+    <div class="panel link-panel">
+      <div class="link-state">
+        <div class="link-icon"><i class="fab fa-bluetooth-b"></i></div>
+        <div>
+          <strong id="connectionStatus" role="status">Chưa kết nối</strong>
+          <small id="connectionSub">VIETMAP_HUD</small>
+        </div>
+        <button id="disconnect" type="button" class="btn btn-ghost" style="margin-left:auto;" hidden>Ngắt</button>
+      </div>
+      <ol id="connectionHelp" class="prep">
+        <li>Bật HUD, để HUD ở chế độ Bluetooth.</li>
+        <li>Ngắt kết nối hoặc đóng app VietMap: HUD chỉ nhận một kết nối mỗi lần.</li>
+        <li>Nhấn kết nối và chọn VIETMAP_HUD trong danh sách.</li>
+      </ol>
+      <button id="connect" type="button" class="btn btn-primary"><i class="fab fa-bluetooth-b"></i> <span>Kết nối HUD</span></button>
+    </div>
+  </section>
+
+  <p id="notice" class="notice" role="status" aria-live="polite" aria-atomic="true"></p>
+
+  <form id="form" hidden>
+    <fieldset id="controls">
+      <div class="section-title">Màn hình</div>
+      <fieldset class="panel group">
+        <div class="stack">
+          <label class="stack-head" for="brightness"><span>Độ sáng</span><output id="brightnessValue" for="brightness">100%</output></label>
+          <input id="brightness" type="range" min="10" max="100" step="5">
+        </div>
+        <label class="row"><span>Tự động độ sáng<small>Giảm sáng vào buổi tối</small></span><input id="autoBrightness" type="checkbox" role="switch"></label>
+        <div class="stack">
+          <span class="stack-head" id="rotationLabel">Xoay màn hình</span>
+          <div class="segments cols-4" role="radiogroup" aria-labelledby="rotationLabel">
+            <label><input type="radio" name="rotation" value="0"><span>0°</span></label>
+            <label><input type="radio" name="rotation" value="1"><span>90°</span></label>
+            <label><input type="radio" name="rotation" value="2"><span>180°</span></label>
+            <label><input type="radio" name="rotation" value="3"><span>270°</span></label>
+          </div>
+        </div>
+        <label class="row"><span>Lật gương<small>Dùng khi chiếu lên kính lái</small></span><input id="mirror" type="checkbox" role="switch"></label>
+      </fieldset>
+
+      <div class="section-title">Giao diện</div>
+      <fieldset class="panel group">
+        <div class="stack">
+          <div class="segments cols-2" role="radiogroup" aria-label="Giao diện">
+            <label><input type="radio" name="theme" value="0"><span><i class="fas fa-gauge-high"></i> Lái xe</span></label>
+            <label data-theme-all><input type="radio" name="theme" value="1"><span><i class="fas fa-route"></i> Hành trình</span></label>
+            <label><input type="radio" name="theme" value="2"><span><i class="fas fa-minus"></i> Tối giản</span></label>
+            <label data-theme-all><input type="radio" name="theme" value="3"><span><i class="fas fa-crosshairs"></i> Tập trung</span></label>
+          </div>
+        </div>
+        <label class="row" data-cap="LED"><span>Đèn LED</span><input id="led" type="checkbox" role="switch"></label>
+        <label class="row" data-cap="EMOJI"><span>Emoji khi chờ<small>Hiện khi chưa kết nối app</small></span><input id="emojiIdle" type="checkbox" role="switch"></label>
+      </fieldset>
+
+      <div class="section-title">Tốc độ &amp; cảnh báo</div>
+      <fieldset class="panel group">
+        <div class="row">
+          <span id="offsetLabel">Lệch tốc<small>Cộng hoặc trừ tốc độ hiển thị (km/h)</small></span>
+          <div class="stepper" role="group" aria-labelledby="offsetLabel">
+            <button id="minus" type="button" aria-label="Giảm lệch tốc"><i class="fas fa-minus"></i></button>
+            <output id="speedOffset" aria-live="polite">0</output>
+            <button id="plus" type="button" aria-label="Tăng lệch tốc"><i class="fas fa-plus"></i></button>
+          </div>
+        </div>
+        <label class="row" data-cap="BUZZER"><span>Âm cảnh báo tốc độ</span><input id="speedVolume" type="checkbox" role="switch"></label>
+        <label class="row" data-cap="BUZZER"><span>Âm cảnh báo biển báo</span><input id="signVolume" type="checkbox" role="switch"></label>
+        <label class="row"><span>Nháy màn hình khi quá tốc độ</span><input id="overspeedBlink" type="checkbox" role="switch"></label>
+      </fieldset>
+
+      <div data-cap="CONN_MODE">
+        <div class="section-title">Chế độ kết nối</div>
+        <fieldset class="panel group">
+          <div class="stack">
+            <div class="segments cols-2" role="radiogroup" aria-label="Chế độ kết nối">
+              <label><input type="radio" name="connectionMode" value="0"><span><i class="fab fa-bluetooth-b"></i> Bluetooth</span></label>
+              <label><input type="radio" name="connectionMode" value="1"><span><i class="fas fa-tower-broadcast"></i> ESP-NOW</span></label>
+            </div>
+            <p class="warn"><i class="fas fa-triangle-exclamation"></i><span>Đổi chế độ sẽ khởi động lại HUD. ESP-NOW tắt Bluetooth, muốn cấu hình qua web lại phải chuyển về Bluetooth trên HUD.</span></p>
+          </div>
+        </fieldset>
+      </div>
+    </fieldset>
+
+    <div class="savebar">
+      <p id="changes">Chưa có thay đổi</p>
+      <button id="save" type="submit" class="btn btn-solid" disabled><i class="fas fa-floppy-disk"></i> <span>Lưu cài đặt</span></button>
+    </div>
+  </form>
+</main>
+
+<footer>&copy; <span id="currentYear"></span> OneHUD Team</footer>
+
+<script type="module">
+  import { pack, unpack, CAP } from './wire.js';
+  const SVC = '0000fff0-0000-1000-8000-00805f9b34fb';
+  const CHR = '0000fff4-0000-1000-8000-00805f9b34fb';
+  const $ = (id) => document.getElementById(id);
+  const boolFields = ['autoBrightness', 'speedVolume', 'signVolume', 'mirror', 'led', 'overspeedBlink', 'emojiIdle'];
+  const radioFields = ['theme', 'rotation', 'connectionMode'];
+  const networkMessage = 'Không kết nối được. Ngắt kết nối app VietMap với HUD (hoặc đóng app) rồi thử lại. HUD ở chế độ ESP-NOW thì không cấu hình qua web được.';
+  let mode = 'disconnected', device = null, chr = null, baseline = null, offset = 0, expectedReboot = false;
+  $('currentYear').textContent = new Date().getFullYear();
+
+  const toast = (message, tone = 'info') => { $('notice').textContent = message; $('notice').dataset.tone = tone; };
+  const equal = (a, b) => { const x = pack(a), y = pack(b); return x.every((v, i) => v === y[i]); };
+
+  function readForm() {
+    const s = { ...baseline, brightness: +$('brightness').value, speedOffset: offset };
+    for (const key of boolFields) s[key] = $(key).checked;
+    for (const key of radioFields) s[key] = +document.querySelector(`input[name="${key}"]:checked`).value;
+    return s;
+  }
+  function updateDirty() {
+    const dirty = !!baseline && !equal(readForm(), baseline);
+    $('save').disabled = mode !== 'editing' || !dirty;
+    $('changes').textContent = dirty ? '● Chưa lưu' : 'Chưa có thay đổi';
+    $('changes').classList.toggle('dirty', dirty);
+    const b = +$('brightness').value;
+    $('brightnessValue').textContent = `${b}%`;
+    $('brightness').style.setProperty('--fill', `${(b - 10) / 90 * 100}%`);
+    $('speedOffset').textContent = `${offset > 0 ? '+' : ''}${offset}`;
+    $('minus').disabled = mode !== 'editing' || offset <= -20;
+    $('plus').disabled = mode !== 'editing' || offset >= 20;
+  }
+  function setMode(next) {
+    mode = next;
+    document.body.dataset.mode = next;
+    const active = next === 'editing' || next === 'saving';
+    $('unsupported').hidden = next !== 'unsupported';
+    $('connection').hidden = next === 'unsupported';
+    $('connect').hidden = active;
+    $('connect').disabled = next === 'connecting';
+    $('connect').querySelector('span').textContent = next === 'connecting' ? 'Đang kết nối…' : 'Kết nối HUD';
+    $('connectionHelp').hidden = active;
+    $('disconnect').hidden = !active;
+    $('disconnect').disabled = next === 'saving';
+    $('connectionStatus').textContent = active ? 'Đã kết nối' : next === 'connecting' ? 'Đang kết nối…' : 'Chưa kết nối';
+    $('form').hidden = !active;
+    $('controls').disabled = next !== 'editing';
+    $('save').querySelector('span').textContent = next === 'saving' ? 'Đang lưu…' : 'Lưu cài đặt';
+    if (baseline) updateDirty();
+  }
+  function render(s) {
+    baseline = s;
+    offset = s.speedOffset;
+    $('brightness').value = s.brightness;
+    for (const key of boolFields) $(key).checked = s[key];
+    for (const key of radioFields) {
+      let value = s[key];
+      if (key === 'theme' && !(s.caps & CAP.THEME_ALL) && value !== 0 && value !== 2) value = 0;
+      document.querySelector(`input[name="${key}"][value="${value}"]`).checked = true;
+    }
+    document.querySelectorAll('[data-cap]').forEach((el) => { el.hidden = !(s.caps & CAP[el.dataset.cap]); });
+    document.querySelectorAll('[data-theme-all]').forEach((el) => { el.hidden = !(s.caps & CAP.THEME_ALL); });
+    setMode('editing');
+  }
+  function onDisconnected(event) {
+    if (event.target !== device) return;
+    chr = null;
+    setMode('disconnected');
+    if (!expectedReboot) toast('Mất kết nối HUD', 'error');
+  }
+
+  $('connect').addEventListener('click', async () => {
+    setMode('connecting'); toast(''); expectedReboot = false;
+    let stage = 'chooser';
+    try {
+      if (device) device.removeEventListener('gattserverdisconnected', onDisconnected);
+      device = await navigator.bluetooth.requestDevice({ filters: [{ name: 'VIETMAP_HUD' }], optionalServices: [SVC] });
+      device.addEventListener('gattserverdisconnected', onDisconnected);
+      stage = 'connect';
+      const server = await device.gatt.connect();
+      stage = 'characteristic';
+      chr = await (await server.getPrimaryService(SVC)).getCharacteristic(CHR);
+      stage = 'read';
+      const value = await chr.readValue();
+      stage = 'decode';
+      render(unpack(value));
+    } catch (error) {
+      if (device?.gatt.connected) device.gatt.disconnect();
+      chr = null; setMode('disconnected');
+      if (stage === 'chooser' && error.name === 'NotFoundError') return;
+      if (stage === 'characteristic' && error.name === 'NotFoundError') {
+        toast('Firmware HUD chưa hỗ trợ cấu hình qua web, hãy cập nhật firmware. Nếu đã cập nhật: vào cài đặt Bluetooth của điện thoại, quên thiết bị VIETMAP_HUD rồi thử lại.', 'error');
+      } else toast(stage === 'decode' ? error.message : networkMessage, 'error');
+    }
+  });
+  $('disconnect').addEventListener('click', () => device?.gatt.disconnect());
+  $('controls').addEventListener('input', updateDirty);
+  for (const [id, delta] of [['minus', -1], ['plus', 1]]) {
+    $(id).addEventListener('click', () => { offset = Math.max(-20, Math.min(20, offset + delta)); updateDirty(); });
+  }
+  $('form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (mode !== 'editing' || $('save').disabled || !chr) return;
+    const settings = readForm();
+    const reboot = settings.connectionMode !== baseline.connectionMode;
+    if (reboot && !confirm('HUD sẽ khởi động lại để đổi chế độ kết nối.')) return;
+    expectedReboot = reboot;
+    setMode('saving'); toast('');
+    const characteristic = chr;
+    try {
+      await characteristic.writeValueWithResponse(pack(settings));
+    } catch (error) {
+      expectedReboot = false;
+      setMode(device?.gatt.connected ? 'editing' : 'disconnected');
+      toast(error.name === 'NetworkError' ? networkMessage : 'HUD từ chối cấu hình (giá trị không hợp lệ).', 'error');
+      return;
+    }
+    if (reboot) {
+      toast('Đã lưu, HUD đang khởi động lại.', 'ok');
+      setMode('disconnected');
+      if (device?.gatt.connected) device.gatt.disconnect();
+      return;
+    }
+    try {
+      let actual;
+      // Firmware applies queued settings after acknowledging the write
+      for (let attempt = 0; attempt < 20; attempt++) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        actual = unpack(await characteristic.readValue());
+        if (equal(actual, settings)) break;
+      }
+      render(actual);
+      if (equal(actual, settings)) toast('Đã lưu, HUD đã áp dụng.', 'ok');
+      else toast('HUD chưa áp dụng đầy đủ cài đặt. Kiểm tra các giá trị và thử lại.', 'error');
+    } catch (error) {
+      setMode(device?.gatt.connected ? 'editing' : 'disconnected');
+      toast(error.name === 'NetworkError' ? 'Mất kết nối HUD' : error.message, 'error');
+    }
+  });
+  $('copy').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(location.href); toast('Đã sao chép link.', 'ok'); }
+    catch { toast('Không sao chép được. Hãy sao chép link từ thanh địa chỉ.', 'error'); }
+  });
+
+  if (!navigator.bluetooth) {
+    const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    $('unsupportedText').textContent = ios
+      ? 'Safari và Chrome trên iPhone, iPad không hỗ trợ Bluetooth web. Cài trình duyệt Bluefy (miễn phí) rồi mở trang này trong Bluefy.'
+      : 'Hãy mở trang này bằng Chrome trên Android hoặc Chrome / Edge trên máy tính.';
+    $('iosHelp').hidden = !ios;
+    setMode('unsupported');
+  } else setMode('disconnected');
+</script>
+</body>
+</html>
