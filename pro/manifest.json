@@ -1,5 +1,5 @@
 {
   "name": "OneHUD Pro",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "_note": "Version shown on pro/ by deploy.sh. Updates go over OTA: firmware/ota.json, boards 18 and s318."
 }
