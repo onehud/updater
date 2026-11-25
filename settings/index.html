@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#070b12">
+<title>Cài đặt HUD · OneHUD</title>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-2VN4M585CR"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-2VN4M585CR');
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root {
+    --bg:      #070b12;
+    --surface: #0e1520;
+    --surface2:#141d2e;
+    --border:  #1e2d45;
+    --accent:  #00d4ff;
+    --green:   #00e5a0;
+    --yellow:  #ffd700;
+    --red:     #ff4757;
+    --text:    #e8edf5;
+    --muted:   #6b7f99;
+    --font:    'Space Grotesk', sans-serif;
+    --mono:    'JetBrains Mono', monospace;
+    --ease:    cubic-bezier(.22,1,.36,1);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body {
+    background:var(--bg); color:var(--text); font-family:var(--font);
+    min-height:100vh; overflow-x:hidden; -webkit-tap-highlight-color:transparent;
+  }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:3px; border-radius:6px; }
+
+  /* ── HEADER (same pattern as product pages) ── */
+  header {
+    padding:48px 48px 32px; border-bottom:1px solid var(--border);
+    background:linear-gradient(135deg,#0e1520 0%,#070b12 100%);
+    position:relative; overflow:hidden;
+  }
+  header::before {
+    content:''; position:absolute; top:-60px; right:-60px; width:300px; height:300px;
+    background:radial-gradient(circle,rgba(0,212,255,.08) 0%,transparent 70%); pointer-events:none;
+  }
+  .header-tag {
+    font-family:var(--mono); font-size:11px; color:var(--accent);
+    letter-spacing:3px; text-transform:uppercase; margin-bottom:12px; opacity:.8;
+  }
+  header h1 { font-size:clamp(28px,4vw,48px); font-weight:700; letter-spacing:-1px; line-height:1.1; }
+  header h1 span { color:var(--accent); }
+  .header-meta { display:flex; gap:10px; margin-top:20px; flex-wrap:wrap; }
+  .header-meta > span {
+    font-family:var(--mono); font-size:12px; color:var(--muted);
+    padding:4px 12px; border:1px solid var(--border); border-radius:4px; background:rgba(255,255,255,.02);
+  }
+  .header-meta > span b { color:var(--accent); font-weight:600; }
+  .back-link {
+    display:inline-flex; align-items:center; gap:6px; margin-top:16px; min-height:32px;
+    font-family:var(--mono); font-size:11px; color:var(--muted); text-decoration:none; transition:color .2s;
+  }
+  .back-link:hover { color:var(--accent); }
+
+  /* ── LAYOUT ── */
+  main { padding:8px 48px 0; max-width:640px; margin:0 auto; }
+  .section-title {
+    font-size:11px; font-family:var(--mono); color:var(--accent);
+    letter-spacing:3px; text-transform:uppercase; margin:36px 0 14px;
+    display:flex; align-items:center; gap:12px;
+  }
+  .section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+  .panel { background:var(--surface); border:1px solid var(--border); border-radius:14px; }
+
+  /* ── CONNECTION ── */
+  .link-panel { padding:24px; display:grid; gap:18px; }
+  .link-state { display:flex; align-items:center; gap:14px; }
+  .link-icon {
+    width:48px; height:48px; border-radius:12px; flex-shrink:0;
+    display:grid; place-items:center; font-size:20px;
+    border:1px solid var(--border); background:var(--surface2); color:var(--muted);
+    transition:color .3s, border-color .3s, background .3s;
+  }
+  .link-state strong { display:block; font-size:16px; font-weight:600; }
+  .link-state small { display:block; font-family:var(--mono); font-size:12px; color:var(--muted); margin-top:2px; }
+  body[data-mode="connecting"] .link-icon { color:var(--accent); border-color:rgba(0,212,255,.4); }
+  body[data-mode="connecting"] .link-icon i { animation:pulse 1.2s var(--ease) infinite; }
+  body[data-mode="editing"] .link-icon,
+  body[data-mode="saving"] .link-icon { color:var(--green); border-color:rgba(0,229,160,.4); background:rgba(0,229,160,.06); }
+  @keyframes pulse { 50% { opacity:.35; } }
+  .prep { display:grid; gap:10px; list-style:none; counter-reset:prep; }
+  .prep li {
+    counter-increment:prep; display:grid; grid-template-columns:28px 1fr; gap:10px;
+    font-size:13px; color:var(--muted); line-height:1.5;
+  }
+  .prep li::before {
+    content:counter(prep); width:24px; height:24px; border-radius:6px;
+    display:grid; place-items:center; font-family:var(--mono); font-size:11px; font-weight:700;
+    color:var(--accent); border:1px solid rgba(0,212,255,.35); background:rgba(0,212,255,.06);
+  }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display:inline-flex; align-items:center; justify-content:center; gap:10px;
+    min-height:48px; padding:0 20px; border-radius:10px; width:100%;
+    font-family:var(--mono); font-weight:600; font-size:13px; letter-spacing:.3px;
+    text-decoration:none; cursor:pointer; white-space:nowrap;
+    border:1px solid var(--border); color:var(--muted); background:var(--surface2);
+    transition:background .2s, box-shadow .2s, color .2s, border-color .2s, transform .2s var(--ease);
+  }
+  .btn:active:not(:disabled) { transform:scale(.98); }
+  .btn:disabled { opacity:.45; cursor:default; }
+  .btn-primary { border-color:var(--accent); color:var(--accent); background:rgba(0,212,255,.08); }
+  .btn-primary:hover:not(:disabled) { background:rgba(0,212,255,.14); box-shadow:0 0 18px rgba(0,212,255,.18); }
+  .btn-solid { border-color:var(--accent); color:#04121a; background:var(--accent); }
+  .btn-solid:hover:not(:disabled) { box-shadow:0 0 22px rgba(0,212,255,.3); }
+  .btn-ghost { width:auto; min-height:40px; padding:0 14px; font-size:12px; }
+  .btn-ghost:hover:not(:disabled) { color:var(--text); border-color:var(--muted); }
+
+  /* ── NOTICE ── */
+  .notice {
+    margin-top:14px; padding:12px 16px; border-radius:10px; font-size:13px; line-height:1.55;
+    border:1px solid var(--border); background:var(--surface2); color:var(--text);
+    display:flex; gap:10px; align-items:flex-start; overflow-wrap:anywhere;
+  }
+  .notice:empty { display:none; }
+  .notice::before { font-family:'Font Awesome 6 Free'; font-weight:900; content:'\f05a'; color:var(--accent); }
+  .notice[data-tone="ok"] { border-color:rgba(0,229,160,.35); background:rgba(0,229,160,.06); }
+  .notice[data-tone="ok"]::before { content:'\f00c'; color:var(--green); }
+  .notice[data-tone="error"] { border-color:rgba(255,71,87,.4); background:rgba(255,71,87,.07); }
+  .notice[data-tone="error"]::before { content:'\f071'; color:var(--red); }
+
+  /* ── UNSUPPORTED ── */
+  .unsupported { padding:24px; display:grid; gap:14px; }
+  .unsupported h2 { font-size:18px; font-weight:600; }
+  .unsupported p { font-size:14px; color:var(--muted); line-height:1.6; }
+  .hint { font-size:13px; color:var(--muted); line-height:1.55; }
+
+  /* ── SETTINGS ── */
+  fieldset { border:0; min-width:0; }
+  .group { padding:4px 20px; }
+  .row {
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    min-height:60px; padding:10px 0; border-top:1px solid var(--border);
+  }
+  .row:first-child { border-top:0; }
+  .row > span { font-size:15px; }
+  .row > span small { display:block; font-size:12px; color:var(--muted); margin-top:2px; line-height:1.45; }
+  .stack { padding:16px 0; border-top:1px solid var(--border); display:grid; gap:12px; }
+  .stack:first-child { border-top:0; }
+  .stack-head { display:flex; justify-content:space-between; align-items:baseline; font-size:15px; }
+  .stack-head output { font-family:var(--mono); font-size:15px; color:var(--accent); font-variant-numeric:tabular-nums; }
+
+  /* switch */
+  input[role="switch"] {
+    appearance:none; -webkit-appearance:none; flex-shrink:0; cursor:pointer;
+    width:52px; height:30px; border-radius:30px; position:relative;
+    background:var(--surface2); border:1px solid var(--border);
+    transition:background .25s var(--ease), border-color .25s;
+  }
+  input[role="switch"]::after {
+    content:''; position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%;
+    background:var(--muted); transition:transform .25s var(--ease), background .25s;
+  }
+  input[role="switch"]:checked { background:rgba(0,212,255,.18); border-color:var(--accent); }
+  input[role="switch"]:checked::after { transform:translateX(22px); background:var(--accent); }
+  input[role="switch"]:disabled { cursor:default; opacity:.5; }
+
+  /* segmented */
+  .segments { display:grid; grid-template-columns:repeat(auto-fit,minmax(0,1fr)); gap:6px; padding:4px; border-radius:10px; background:var(--bg); border:1px solid var(--border); }
+  .segments label { position:relative; }
+  .segments input { position:absolute; opacity:0; inset:0; margin:0; cursor:pointer; }
+  .segments span {
+    display:flex; align-items:center; justify-content:center; gap:6px; min-height:44px; padding:0 6px;
+    border-radius:7px; font-family:var(--mono); font-size:12px; font-weight:600; color:var(--muted);
+    border:1px solid transparent; transition:background .2s, color .2s, border-color .2s; text-align:center;
+  }
+  .segments input:checked + span { color:var(--accent); background:rgba(0,212,255,.1); border-color:rgba(0,212,255,.45); }
+  .segments input:focus-visible + span { outline:2px solid var(--accent); outline-offset:2px; }
+  .segments.cols-2 { grid-template-columns:repeat(2,1fr); }
+  .segments.cols-4 { grid-template-columns:repeat(4,1fr); }
+
+  /* slider */
+  input[type="range"] { -webkit-appearance:none; appearance:none; width:100%; height:32px; background:transparent; cursor:pointer; }
+  input[type="range"]::-webkit-slider-runnable-track {
+    height:6px; border-radius:6px; border:1px solid var(--border);
+    background:linear-gradient(to right,var(--accent) var(--fill,50%),var(--surface2) var(--fill,50%));
+  }
+  input[type="range"]::-moz-range-track { height:6px; border-radius:6px; background:var(--surface2); border:1px solid var(--border); }
+  input[type="range"]::-moz-range-progress { height:6px; border-radius:6px; background:var(--accent); }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance:none; width:24px; height:24px; margin-top:-10px; border-radius:50%;
+    background:var(--accent); border:4px solid var(--bg); box-shadow:0 0 0 1px var(--accent);
+  }
+  input[type="range"]::-moz-range-thumb { width:18px; height:18px; border-radius:50%; background:var(--accent); border:4px solid var(--bg); }
+
+  /* stepper */
+  .stepper { display:flex; align-items:center; gap:4px; padding:4px; border-radius:10px; background:var(--bg); border:1px solid var(--border); }
+  .stepper button {
+    width:44px; height:40px; border-radius:7px; border:0; cursor:pointer;
+    background:var(--surface2); color:var(--text); font-size:14px; transition:background .2s, color .2s;
+  }
+  .stepper button:hover:not(:disabled) { color:var(--accent); }
+  .stepper button:disabled { opacity:.35; cursor:default; }
+  .stepper output { min-width:64px; text-align:center; font-family:var(--mono); font-weight:600; color:var(--accent); font-variant-numeric:tabular-nums; }
+
+  .warn { display:flex; gap:8px; font-size:12px; color:var(--muted); line-height:1.5; }
+  .row.head { min-height:36px; font-family:var(--mono); font-size:11px; letter-spacing:.08em; color:var(--muted); text-transform:uppercase; }
+  .row.head > span { font-size:11px; }
+  .mono { font-family:var(--mono); font-size:14px; color:var(--muted); }
+  .row select {
+    -webkit-appearance:none; appearance:none; min-width:104px; height:40px; padding:0 32px 0 12px; border-radius:8px;
+    border:1px solid var(--border); color:var(--accent); font-family:var(--mono); font-size:15px; cursor:pointer;
+    background:var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%2300d4ff' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 12px center;
+  }
+  .row select:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:8px; }
+  .row select option { color:var(--text); background:var(--surface2); }
+  .row a.btn, .row button.btn { flex-shrink:0; width:auto; min-height:40px; padding:0 16px; }
+  [data-cap] .warn { padding-bottom:14px; }
+  .warn i { color:var(--yellow); margin-top:2px; }
+
+  /* ── IDLE IMAGE ── */
+  .preview { width:min(240px,100%); aspect-ratio:1; border-radius:50%; background:#000; border:1px solid var(--border); justify-self:center; }
+  .file-pick { position:relative; }
+  .file-pick input { position:absolute; inset:0; opacity:0; cursor:pointer; }
+  .actions { display:grid; grid-template-columns:2fr 1fr; gap:8px; }
+  .bar { height:12px; border-radius:12px; background:var(--bg); border:1px solid var(--border); overflow:hidden; }
+  .bar > div { height:100%; width:0; border-radius:12px; background:var(--accent); transition:width .2s linear; }
+
+  /* ── SAVE BAR ── */
+  .savebar {
+    position:sticky; bottom:0; z-index:5; margin:28px -48px 0;
+    padding:14px 48px calc(14px + env(safe-area-inset-bottom));
+    background:var(--bg); border-top:1px solid var(--border);
+    display:flex; align-items:center; gap:16px;
+  }
+  .savebar p { flex:1; font-family:var(--mono); font-size:12px; color:var(--muted); }
+  .savebar p.dirty { color:var(--yellow); }
+  .savebar .btn { width:auto; min-width:180px; }
+
+  footer {
+    padding:32px 48px; border-top:1px solid var(--border); margin-top:40px;
+    color:var(--muted); font-size:12px; font-family:var(--mono); text-align:center;
+  }
+  form + footer { margin-top:0; border-top:0; }
+
+  @media (max-width:640px) {
+    header { padding:32px 16px 24px; }
+    main { padding:0 16px 0; }
+    .group { padding:4px 16px; }
+    .link-panel, .unsupported { padding:20px 16px; }
+    .savebar { margin:24px -16px 0; padding:12px 16px calc(12px + env(safe-area-inset-bottom)); }
+    .savebar .btn { min-width:0; flex:1.4; }
+    footer { padding:24px 16px; }
+  }
+  @media (prefers-reduced-motion:reduce) { * { transition:none !important; animation:none !important; } }
+  #gifControls.dropping { outline:2px dashed currentColor; outline-offset:4px; }
+</style>
+</head>
+<body data-mode="disconnected">
+
+<header>
+  <div class="header-tag">// hud settings</div>
+  <h1>Cài đặt <span>HUD</span></h1>
+  <div class="header-meta">
+    <span><i class="fab fa-bluetooth-b"></i> Bluetooth</span>
+    <span>Android: <b>Chrome</b></span>
+    <span>iPhone: <b>Bluefy</b></span>
+  </div>
+  <a href="../index.html" class="back-link"><i class="fas fa-arrow-left"></i> Quay lại trang chính</a>
+  <a href="../ota/" class="back-link" style="margin-left:16px;"><i class="fas fa-microchip"></i> Cập nhật firmware</a>
+</header>
+
+<main>
+  <section id="unsupported" hidden>
+    <div class="section-title">Trình duyệt</div>
+    <div class="panel unsupported">
+      <h2>Trình duyệt chưa hỗ trợ Bluetooth</h2>
+      <p id="unsupportedText"></p>
+      <div id="iosHelp" hidden style="display:grid; gap:10px;">
+        <a class="btn btn-primary" href="https://apps.apple.com/app/bluefy-web-ble-browser/id1492822055" target="_blank" rel="noopener noreferrer"><i class="fab fa-app-store-ios"></i> Cài Bluefy trên App Store</a>
+        <button id="copy" type="button" class="btn"><i class="fas fa-link"></i> Sao chép link trang này</button>
+        <p class="hint">Mở Bluefy, dán link vào thanh địa chỉ rồi kết nối HUD.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="connection">
+    <div class="section-title">Kết nối</div>
+    <div class="panel link-panel">
+      <div class="link-state">
+        <div class="link-icon"><i class="fab fa-bluetooth-b"></i></div>
+        <div>
+          <strong id="connectionStatus" role="status">Chưa kết nối</strong>
+          <small id="connectionSub">VIETMAP_HUD</small>
+        </div>
+        <button id="disconnect" type="button" class="btn btn-ghost" style="margin-left:auto;" hidden>Ngắt</button>
+      </div>
+      <ol id="connectionHelp" class="prep">
+        <li>Bật HUD, để HUD ở chế độ Bluetooth.</li>
+        <li>Ngắt kết nối hoặc đóng app VietMap: HUD chỉ nhận một kết nối mỗi lần.</li>
+        <li>Nhấn kết nối và chọn VIETMAP_HUD trong danh sách.</li>
+      </ol>
+      <button id="connect" type="button" class="btn btn-primary"><i class="fab fa-bluetooth-b"></i> <span>Kết nối HUD</span></button>
+    </div>
+  </section>
+
+  <p id="notice" class="notice" role="status" aria-live="polite" aria-atomic="true"></p>
+
+  <form id="form" hidden>
+    <fieldset id="controls">
+      <div class="section-title">Hệ thống</div>
+      <fieldset class="panel group">
+        <div class="stack">
+          <label class="stack-head" for="brightness"><span>Độ sáng</span><output id="brightnessValue" for="brightness">100</output></label>
+          <input id="brightness" type="range" min="10" max="100" step="10">
+        </div>
+        <label class="row"><span>Tự động<small>Độ sáng theo khung giờ bên dưới</small></span><input id="autoBrightness" type="checkbox" role="switch"></label>
+        <label class="row"><span>Phản chiếu<small>Dùng khi chiếu lên kính lái</small></span><input id="mirror" type="checkbox" role="switch"></label>
+        <label class="row"><span>Nhấp nháy<small>Nháy màn hình khi quá tốc độ</small></span><input id="overspeedBlink" type="checkbox" role="switch"></label>
+        <label class="row" data-cap="EMOJI"><span>Màn chờ<small>Hiện ảnh khi chưa kết nối app</small></span><input id="emojiIdle" type="checkbox" role="switch"></label>
+        <label class="row" data-cap="LED"><span>Colorful LED</span><input id="led" type="checkbox" role="switch"></label>
+        <div class="stack">
+          <span class="stack-head" id="rotationLabel">Xoay</span>
+          <div class="segments cols-4" role="radiogroup" aria-labelledby="rotationLabel">
+            <label><input type="radio" name="rotation" value="0"><span>0°</span></label>
+            <label><input type="radio" name="rotation" value="1"><span>90°</span></label>
+            <label><input type="radio" name="rotation" value="2"><span>180°</span></label>
+            <label><input type="radio" name="rotation" value="3"><span>270°</span></label>
+          </div>
+        </div>
+      </fieldset>
+
+      <div data-cap="BUZZER">
+        <div class="section-title">Âm thanh</div>
+        <fieldset class="panel group">
+          <label class="row"><span>Quá tốc độ</span><input id="speedVolume" type="checkbox" role="switch"></label>
+          <label class="row"><span>Biển báo</span><input id="signVolume" type="checkbox" role="switch"></label>
+          <div class="row"><span>Thử loa</span><button id="testSpeaker" type="button" class="btn"><i class="fas fa-volume-high"></i> Thử</button></div>
+        </fieldset>
+      </div>
+
+      <div class="section-title">Khung giờ</div>
+      <fieldset class="panel group">
+        <p class="hint" style="padding:14px 0 4px;">Độ sáng theo giờ, dùng khi bật Tự động.</p>
+        <div class="row head"><span>Từ</span><span>Độ sáng</span></div>
+        <div id="slots"></div>
+      </fieldset>
+
+      <div class="section-title">Tốc độ</div>
+      <fieldset class="panel group">
+        <label class="row"><span>Lệch theo %<small id="rangeUnit">Độ lệch tính bằng km/h</small></span><input id="percent" type="checkbox" role="switch"></label>
+        <div class="row head"><span>Dải (km/h)</span><span>Độ lệch</span></div>
+        <div id="ranges"></div>
+      </fieldset>
+
+      <div class="section-title">Mặt hiển thị</div>
+      <fieldset class="panel group">
+        <div class="stack">
+          <div class="segments cols-2" role="radiogroup" aria-label="Mặt hiển thị">
+            <label><input type="radio" name="theme" value="0"><span><i class="fas fa-gauge-high"></i> Lái xe</span></label>
+            <label><input type="radio" name="theme" value="2"><span><i class="fas fa-minus"></i> Tối giản</span></label>
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="section-title">Kết nối</div>
+      <fieldset class="panel group">
+        <div class="row"><span>Địa chỉ MAC</span><output id="mac" class="mono"></output></div>
+        <div data-cap="CONN_MODE">
+          <label class="row"><span>Chuyển tiếp<small>Nhận dẫn đường qua thiết bị chuyển tiếp (ESP-NOW)</small></span><input id="relay" type="checkbox" role="switch"></label>
+          <p class="warn"><i class="fas fa-triangle-exclamation"></i><span>Đổi sẽ khởi động lại HUD. Khi bật, Bluetooth tắt: muốn cấu hình qua web lại phải tắt Chuyển tiếp trên HUD.</span></p>
+        </div>
+      </fieldset>
+
+      <div class="section-title">Cập nhật</div>
+      <fieldset class="panel group">
+        <div class="row"><span>Phiên bản</span><output id="version" class="mono"></output></div>
+        <div class="row"><span>Cập nhật firmware</span><a class="btn" href="https://onehud.github.io/updater/" target="_blank" rel="noopener"><i class="fas fa-arrow-up-right-from-square"></i> Mở</a></div>
+        <div class="row"><span>Gofa<small>Đăng ký dùng HUD với app Gofa</small></span><a class="btn" href="https://hud.platform.gofa.vn/guest/register" target="_blank" rel="noopener"><i class="fas fa-arrow-up-right-from-square"></i> Mở</a></div>
+      </fieldset>
+    </fieldset>
+
+    <div id="gif" hidden>
+      <div class="section-title">Ảnh màn chờ</div>
+      <fieldset id="gifControls" class="panel group">
+        <div class="stack">
+          <p class="hint">Chọn hoặc kéo thả ảnh GIF (hoặc ảnh thường) vào đây để hiện trên HUD khi chưa kết nối app.</p>
+          <p id="gifTips" class="hint"></p>
+          <canvas id="gifPreview" class="preview" width="240" height="240" hidden></canvas>
+          <p id="gifInfo" class="hint" hidden></p>
+          <label class="btn btn-primary file-pick"><i class="fas fa-image"></i> <span>Chọn ảnh</span><input id="gifFile" type="file" accept="image/gif,image/*"></label>
+          <div id="gifProgress" class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden><div id="gifFill"></div></div>
+          <div class="actions">
+            <button id="gifSend" type="button" class="btn btn-solid" disabled><i class="fas fa-upload"></i> <span>Gửi lên HUD</span></button>
+            <button id="gifDelete" type="button" class="btn"><i class="fas fa-trash"></i> Xoá ảnh</button>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="savebar">
+      <p id="changes">Chưa có thay đổi</p>
+      <button id="save" type="submit" class="btn btn-solid" disabled><i class="fas fa-floppy-disk"></i> <span>Lưu cài đặt</span></button>
+    </div>
+  </form>
+</main>
+
+<footer>&copy; <span id="currentYear"></span> OneHUD Team</footer>
+
+<script type="module">
+  import { pack, unpack, CAP, SLOTS, RANGES, SPEED_OFFSET_MIN, SPEED_OFFSET_MAX } from './wire.js';
+  import { encode, crc32 } from './oha.js';
+  const SVC = '0000fff0-0000-1000-8000-00805f9b34fb';
+  const CHR = '0000fff4-0000-1000-8000-00805f9b34fb';
+  const GIF = '0000fff6-0000-1000-8000-00805f9b34fb';
+  const $ = (id) => document.getElementById(id);
+  const boolFields = ['autoBrightness', 'speedVolume', 'signVolume', 'mirror', 'led', 'overspeedBlink', 'emojiIdle', 'percent'];
+  const radioFields = ['theme', 'rotation'];
+  const networkMessage = 'Không kết nối được. Ngắt kết nối app dẫn đường với HUD (hoặc đóng app) rồi thử lại. HUD đang bật Chuyển tiếp thì không cấu hình qua web được.';
+  let mode = 'disconnected', device = null, chr = null, gifChr = null, gifBusy = false, baseline = null, ranges = [], expectedReboot = false;
+  $('currentYear').textContent = new Date().getFullYear();
+
+  const toast = (message, tone = 'info') => { $('notice').textContent = message; $('notice').dataset.tone = tone; };
+  const equal = (a, b) => { const x = pack(a), y = pack(b); return x.every((v, i) => v === y[i]); };
+  const hhmm = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+  const option = (value, text) => { const o = document.createElement('option'); o.value = value; o.textContent = text; return o; };
+
+  // Rows built once: 4 time slots (30-minute steps, level 10..100) and 8 speed ranges (−10..+10), as on the HUD
+  for (let i = 0; i < SLOTS; i++) {
+    const row = document.createElement('div');
+    row.className = 'row';
+    const time = document.createElement('select'), level = document.createElement('select');
+    time.id = `slotTime${i}`; level.id = `slotLevel${i}`;
+    time.setAttribute('aria-label', `Khung ${i + 1}: giờ bắt đầu`); level.setAttribute('aria-label', `Khung ${i + 1}: độ sáng`);
+    for (let m = 0; m < 1440; m += 30) time.append(option(m, hhmm(m)));
+    for (let l = 10; l <= 100; l += 10) level.append(option(l, l));
+    row.append(time, level);
+    $('slots').append(row);
+  }
+  for (let i = 0; i < RANGES; i++) {
+    const row = document.createElement('div');
+    row.className = 'row';
+    const label = document.createElement('span');
+    label.textContent = i === RANGES - 1 ? `${i * 20}+` : `${i * 20} – ${i * 20 + 20}`;
+    const box = document.createElement('div');
+    box.className = 'stepper';
+    box.innerHTML = `<button type="button" data-range="${i}" data-step="-1" aria-label="Giảm lệch dải ${label.textContent}"><i class="fas fa-minus"></i></button><output id="range${i}">0</output><button type="button" data-range="${i}" data-step="1" aria-label="Tăng lệch dải ${label.textContent}"><i class="fas fa-plus"></i></button>`;
+    row.append(label, box);
+    $('ranges').append(row);
+  }
+  $('ranges').addEventListener('click', (event) => {
+    const b = event.target.closest('button[data-range]');
+    if (!b) return;
+    const i = +b.dataset.range;
+    ranges[i] = Math.max(SPEED_OFFSET_MIN, Math.min(SPEED_OFFSET_MAX, ranges[i] + +b.dataset.step));
+    updateDirty();
+  });
+
+  function readForm() {
+    const s = { ...baseline, brightness: +$('brightness').value, ranges: [...ranges], connectionMode: $('relay').checked ? 1 : 0 };
+    for (const key of boolFields) s[key] = $(key).checked;
+    for (const key of radioFields) s[key] = +document.querySelector(`input[name="${key}"]:checked`).value;
+    s.slots = Array.from({ length: SLOTS }, (_, i) => ({ start: +$(`slotTime${i}`).value, level: +$(`slotLevel${i}`).value }));
+    return s;
+  }
+  function updateDirty() {
+    const dirty = !!baseline && !equal(readForm(), baseline);
+    $('save').disabled = mode !== 'editing' || gifBusy || !dirty;
+    $('changes').textContent = dirty ? '● Chưa lưu' : 'Chưa có thay đổi';
+    $('changes').classList.toggle('dirty', dirty);
+    const b = +$('brightness').value;
+    $('brightnessValue').textContent = b;
+    $('brightness').style.setProperty('--fill', `${(b - 10) / 90 * 100}%`);
+    const unit = $('percent').checked ? '%' : '';
+    $('rangeUnit').textContent = unit ? 'Độ lệch tính bằng % tốc độ' : 'Độ lệch tính bằng km/h';
+    ranges.forEach((v, i) => {
+      $(`range${i}`).textContent = `${v > 0 ? '+' : v < 0 ? '−' : ''}${Math.abs(v)}${unit}`;
+      $(`range${i}`).style.color = v > 0 ? 'var(--accent)' : v < 0 ? 'var(--yellow)' : 'var(--muted)';
+    });
+    document.querySelectorAll('button[data-range]').forEach((btn) => {
+      const v = ranges[+btn.dataset.range];
+      btn.disabled = mode !== 'editing' || (+btn.dataset.step < 0 ? v <= SPEED_OFFSET_MIN : v >= SPEED_OFFSET_MAX);
+    });
+    $('testSpeaker').disabled = mode !== 'editing' || gifBusy;
+  }
+  function setMode(next) {
+    mode = next;
+    document.body.dataset.mode = next;
+    const active = next === 'editing' || next === 'saving';
+    $('unsupported').hidden = next !== 'unsupported';
+    $('connection').hidden = next === 'unsupported';
+    $('connect').hidden = active;
+    $('connect').disabled = next === 'connecting';
+    $('connect').querySelector('span').textContent = next === 'connecting' ? 'Đang kết nối…' : 'Kết nối HUD';
+    $('connectionHelp').hidden = active;
+    $('disconnect').hidden = !active;
+    $('disconnect').disabled = next === 'saving';
+    $('connectionStatus').textContent = active ? 'Đã kết nối' : next === 'connecting' ? 'Đang kết nối…' : 'Chưa kết nối';
+    $('form').hidden = !active;
+    $('controls').disabled = next !== 'editing' || gifBusy;
+    $('gifControls').disabled = next !== 'editing' || gifBusy;
+    $('save').querySelector('span').textContent = next === 'saving' ? 'Đang lưu…' : 'Lưu cài đặt';
+    if (baseline) updateDirty();
+  }
+  // The last saved settings, so a new or re-flashed HUD gets them back with one Save (per browser, not per HUD)
+  const PREFS = 'onehud.settings.v2';
+  const PREF_KEYS = ['brightness', 'rotation', 'theme', 'percent', 'ranges', 'slots', ...boolFields];
+  function savePrefs(s) {
+    try { localStorage.setItem(PREFS, JSON.stringify(Object.fromEntries(PREF_KEYS.map((k) => [k, s[k]])))); } catch {}
+  }
+  function loadPrefs(hud) {
+    try {
+      const saved = JSON.parse(localStorage.getItem(PREFS));
+      if (!saved) return null;
+      const merged = { ...hud, ...Object.fromEntries(PREF_KEYS.filter((k) => k in saved).map((k) => [k, saved[k]])) };
+      merged.connectionMode = hud.connectionMode;   // Chuyển tiếp restarts the HUD: always the HUD's own value
+      pack(merged);   // throws on a stale or edited entry
+      return merged;
+    } catch { return null; }
+  }
+  function fillForm(s) {
+    ranges = [...s.ranges];
+    $('brightness').value = s.brightness;
+    for (const key of boolFields) $(key).checked = s[key];
+    $('relay').checked = s.connectionMode === 1;
+    for (const key of radioFields) {
+      let value = s[key];
+      if (key === 'theme' && value !== 2) value = 0;   // the firmware has two faces: Lái xe (0) and Tối giản (2)
+      document.querySelector(`input[name="${key}"][value="${value}"]`).checked = true;
+    }
+    s.slots.forEach((slot, i) => { $(`slotTime${i}`).value = slot.start; $(`slotLevel${i}`).value = slot.level; });
+  }
+  function render(s) {
+    baseline = s;
+    fillForm(s);
+    $('mac').textContent = s.mac;
+    $('version').textContent = s.version || '—';
+    document.querySelectorAll('[data-cap]').forEach((el) => { el.hidden = !(s.caps & CAP[el.dataset.cap]); });
+    setMode('editing');
+  }
+  function onDisconnected(event) {
+    if (event.target !== device) return;
+    chr = null;
+    setMode('disconnected');
+    if (!expectedReboot) toast('Mất kết nối HUD', 'error');
+  }
+
+  $('connect').addEventListener('click', async () => {
+    setMode('connecting'); toast(''); expectedReboot = false;
+    let stage = 'chooser';
+    try {
+      if (device) device.removeEventListener('gattserverdisconnected', onDisconnected);
+      device = await navigator.bluetooth.requestDevice({ filters: [{ name: 'VIETMAP_HUD' }, { namePrefix: 'OneHUD-' }], optionalServices: [SVC] });
+      device.addEventListener('gattserverdisconnected', onDisconnected);
+      stage = 'connect';
+      const server = await device.gatt.connect();
+      stage = 'characteristic';
+      chr = await (await server.getPrimaryService(SVC)).getCharacteristic(CHR);
+      stage = 'read';
+      const value = await chr.readValue();
+      stage = 'decode';
+      const settings = unpack(value);
+      gifChr = await chr.service.getCharacteristic(GIF).catch(() => null);
+      $('gif').hidden = !gifChr;
+      setGifBoard(settings.board);
+      resetGif();
+      render(settings);
+      const prefs = loadPrefs(settings);
+      if (prefs && !equal(prefs, settings)) {
+        fillForm(prefs);
+        updateDirty();
+        toast('Đã điền cài đặt bạn lưu lần trước trên trình duyệt này. Bấm "Lưu cài đặt" để áp dụng lên HUD.', 'info');
+      }
+    } catch (error) {
+      if (device?.gatt.connected) device.gatt.disconnect();
+      chr = null; setMode('disconnected');
+      if (stage === 'chooser' && error.name === 'NotFoundError') return;
+      if (stage === 'characteristic' && error.name === 'NotFoundError') {
+        toast('Firmware HUD chưa hỗ trợ cấu hình qua web, hãy cập nhật firmware. Nếu đã cập nhật: vào cài đặt Bluetooth của điện thoại, quên thiết bị VIETMAP_HUD rồi thử lại.', 'error');
+      } else toast(stage === 'decode' ? error.message : networkMessage, 'error');
+    }
+  });
+  $('disconnect').addEventListener('click', () => device?.gatt.disconnect());
+  $('controls').addEventListener('input', updateDirty);
+  $('testSpeaker').addEventListener('click', async () => {
+    if (mode !== 'editing' || !chr || !baseline) return;
+    try {
+      await chr.writeValueWithResponse(pack(baseline, true));   // the saved settings, unchanged, plus one beep
+      toast('Đã gửi lệnh thử loa.', 'ok');
+    } catch (error) {
+      toast(error.name === 'NetworkError' ? 'Mất kết nối HUD' : 'HUD không nhận lệnh thử loa.', 'error');
+    }
+  });
+  $('form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (mode !== 'editing' || $('save').disabled || !chr) return;
+    const settings = readForm();
+    const reboot = settings.connectionMode !== baseline.connectionMode;
+    if (reboot && !confirm('HUD sẽ khởi động lại để đổi Chuyển tiếp.')) return;
+    expectedReboot = reboot;
+    setMode('saving'); toast('');
+    const characteristic = chr;
+    try {
+      await characteristic.writeValueWithResponse(pack(settings));
+    } catch (error) {
+      expectedReboot = false;
+      setMode(device?.gatt.connected ? 'editing' : 'disconnected');
+      toast(error.name === 'NetworkError' ? networkMessage : 'HUD từ chối cấu hình (giá trị không hợp lệ).', 'error');
+      return;
+    }
+    if (reboot) {
+      toast('Đã lưu, HUD đang khởi động lại.', 'ok');
+      setMode('disconnected');
+      if (device?.gatt.connected) device.gatt.disconnect();
+      return;
+    }
+    try {
+      let actual;
+      // Firmware applies queued settings after acknowledging the write
+      for (let attempt = 0; attempt < 20; attempt++) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        actual = unpack(await characteristic.readValue());
+        if (equal(actual, settings)) break;
+      }
+      render(actual);
+      if (equal(actual, settings)) { savePrefs(actual); toast('Đã lưu, HUD đã áp dụng.', 'ok'); }
+      else toast('HUD chưa áp dụng đầy đủ cài đặt. Kiểm tra các giá trị và thử lại.', 'error');
+    } catch (error) {
+      setMode(device?.gatt.connected ? 'editing' : 'disconnected');
+      toast(error.name === 'NetworkError' ? 'Mất kết nối HUD' : error.message, 'error');
+    }
+  });
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const GIF_FAIL = 'HUD không nhận ảnh, thử lại';
+  let gifSize = 240, gifMax = 128 * 1024, gifFile = null, gifTimer = 0;
+  function setGifBoard(board) {
+    gifSize = board === '18' || board === 's318' ? 360 : 240;
+    gifMax = (board === 's318' ? 512 : 128) * 1024;
+    $('gifPreview').width = $('gifPreview').height = gifSize;
+    const frames = board === 's318' ? 40 : gifSize === 360 ? 10 : 20;
+    $('gifTips').textContent = `Nên dùng ảnh vuông ${gifSize}×${gifSize}, nền tối hoặc trơn, nội dung chính ở giữa (màn tròn nên bốn góc bị khuất). Ảnh khác cỡ sẽ được tự co vừa màn. Ảnh động nên dưới khoảng ${frames} khung hình; nhiều hơn sẽ được tự bớt khung.`;
+  }
+  function resetGif() {
+    clearInterval(gifTimer); gifFile = null;
+    $('gifPreview').hidden = $('gifInfo').hidden = $('gifProgress').hidden = true;
+    $('gifSend').disabled = true;
+  }
+  function gifProgress(done, total) {
+    const p = Math.round(done / total * 100);
+    $('gifFill').style.width = `${p}%`;
+    $('gifProgress').setAttribute('aria-valuenow', p);
+  }
+  // Frames scaled down to fit the HUD screen; at most 64 kept, each keeps the time of the frames it replaces
+  async function readFrames(file) {
+    const out = [];
+    const add = (image, w, h, delay_ms) => {
+      const s = Math.min(1, gifSize / Math.max(w, h));
+      const dw = Math.max(1, Math.round(w * s)), dh = Math.max(1, Math.round(h * s));
+      const ctx = new OffscreenCanvas(dw, dh).getContext('2d');
+      ctx.drawImage(image, 0, 0, dw, dh);
+      out.push({ data: ctx.getImageData(0, 0, dw, dh), delay_ms });
+    };
+    if (file.type !== 'image/gif') {
+      const bmp = await createImageBitmap(file);
+      add(bmp, bmp.width, bmp.height, 1000);
+      bmp.close();
+      return out;
+    }
+    if (!('ImageDecoder' in window)) throw new Error('Trình duyệt chưa hỗ trợ đọc GIF, hãy dùng Chrome');
+    const dec = new ImageDecoder({ data: await file.arrayBuffer(), type: file.type });
+    try {
+      await dec.tracks.ready;
+      const n = dec.tracks.selectedTrack.frameCount, k = Math.min(n, 64);
+      let next = 0;
+      for (let i = 0; i < n; i++) {
+        const { image } = await dec.decode({ frameIndex: i });
+        const d = (image.duration ?? 0) / 1000;
+        const delay = d > 10 ? d : 100;
+        if (i === Math.floor(next * n / k)) { add(image, image.displayWidth, image.displayHeight, delay); next++; }
+        else out[out.length - 1].delay_ms += delay;
+        image.close();
+      }
+    } finally { dec.close(); }
+    return out;
+  }
+  function preview(frames, used, frameMs, scale) {
+    const cv = $('gifPreview'), ctx = cv.getContext('2d');
+    const pick = Array.from({ length: used }, (_, i) => {
+      const img = frames[Math.floor(i * frames.length / used)].data, c = new OffscreenCanvas(img.width, img.height);
+      c.getContext('2d').putImageData(img, 0, 0);
+      return c;
+    });
+    const fit = Math.min(cv.width / pick[0].width, cv.height / pick[0].height) * scale;
+    const w = Math.round(pick[0].width * fit), h = Math.round(pick[0].height * fit);
+    let i = 0;
+    const draw = () => {
+      ctx.fillStyle = '#000'; ctx.fillRect(0, 0, cv.width, cv.height);
+      ctx.drawImage(pick[i++ % pick.length], (cv.width - w) >> 1, (cv.height - h) >> 1, w, h);
+    };
+    clearInterval(gifTimer); draw();
+    if (used > 1) gifTimer = setInterval(draw, frameMs);
+    cv.hidden = false;
+  }
+  $('gifFile').addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    event.target.value = '';
+    loadGif(file);
+  });
+  for (const t of ['dragover', 'drop']) window.addEventListener(t, (event) => event.preventDefault());   // a missed drop must not open the file
+  const drop = $('gifControls');
+  drop.addEventListener('dragover', (event) => {
+    event.preventDefault();
+    if (!gifBusy) drop.classList.add('dropping');
+  });
+  drop.addEventListener('dragleave', () => drop.classList.remove('dropping'));
+  drop.addEventListener('drop', (event) => {
+    event.preventDefault();
+    drop.classList.remove('dropping');
+    const file = [...(event.dataTransfer?.files || [])].find((f) => f.type.startsWith('image/'));
+    if (gifBusy) return;
+    if (!file) return toast('Hãy thả một file ảnh GIF.', 'error');
+    loadGif(file);
+  });
+  async function loadGif(file) {
+    resetGif();
+    if (!file) return;
+    toast('');
+    try {
+      const frames = await readFrames(file);
+      if (!frames.length) throw new Error('Không đọc được ảnh.');
+      const { data } = frames[0];
+      const r = encode({ frames: frames.map((f) => ({ rgba: f.data.data, delay_ms: f.delay_ms })), srcW: data.width, srcH: data.height },
+        { canvas: gifSize, maxBytes: gifMax, maxFrames: 64 });
+      gifFile = r.bytes;
+      preview(frames, r.frames, new DataView(r.bytes.buffer).getUint16(22, true), r.scale);
+      $('gifInfo').textContent = r.frames < frames.length
+        ? `Ảnh đã được bớt còn ${r.frames} khung hình để vừa bộ nhớ HUD.`
+        : r.frames > 1 ? `Ảnh động ${r.frames} khung hình.` : 'Ảnh tĩnh.';
+      $('gifInfo').hidden = false;
+      $('gifSend').disabled = false;
+    } catch (error) {
+      toast(error.constructor === Error ? error.message : 'Không đọc được ảnh, hãy chọn ảnh khác.', 'error');
+    }
+  }
+  const readGif = async () => {
+    const v = await gifChr.readValue();
+    return { state: v.getUint8(0), error: v.getUint8(1), received: v.getUint32(2, true) };
+  };
+  async function gifRun(job) {
+    gifBusy = true; setMode(mode); toast('');
+    try { await job(); }
+    catch (error) {
+      const linked = device?.gatt.connected;
+      if (linked) device.gatt.disconnect();
+      toast(linked ? 'HUD không nhận ảnh. Kết nối lại HUD rồi gửi lại.' : 'Mất kết nối HUD, ảnh cũ vẫn giữ nguyên.', 'error');
+    }
+    finally { gifBusy = false; setMode(device?.gatt.connected ? 'editing' : 'disconnected'); }
+  }
+  $('gifSend').addEventListener('click', () => gifRun(async () => {
+    const file = gifFile, total = file.length;
+    const head = new Uint8Array(9), hv = new DataView(head.buffer);
+    head[0] = 0x01; hv.setUint32(1, total, true); hv.setUint32(5, crc32(file), true);
+    $('gifProgress').hidden = false; gifProgress(0, total);
+    await gifChr.writeValueWithResponse(head);
+    let st = await readGif();
+    for (let t = 0; st.state === 0 && t < 50; t++) { await sleep(100); st = await readGif(); }
+    if (st.state !== 1 || st.error) throw new Error();
+    const packet = new Uint8Array(5 + 239), pv = new DataView(packet.buffer);
+    packet[0] = 0x02;
+    const CHUNKS = [239, 180, 100, 15];
+    let off = 0, ci = 0, chunk = CHUNKS[0], count = 0, resumes = 0, prev = 0;
+    while (off < total) {
+      const n = Math.min(chunk, total - off);
+      pv.setUint32(1, off, true); packet.set(file.subarray(off, off + n), 5);
+      try { await gifChr.writeValueWithoutResponse(packet.subarray(0, 5 + n)); }
+      catch (error) { if (!device.gatt.connected || ci === CHUNKS.length - 1) throw error; chunk = CHUNKS[++ci]; continue; }
+      off += n;
+      if (++count % 8 === 0 || off === total) {
+        st = await readGif();
+        if (st.error !== 5) resumes = 0;
+        if (st.error === 5 && ++resumes <= 20) {
+          if (st.received - prev < chunk && ci < CHUNKS.length - 1) chunk = CHUNKS[++ci];
+          off = st.received;
+        }
+        else if (st.state !== 1 || st.error) throw new Error();
+        else off = st.received;
+        prev = off;
+        gifProgress(off, total);
+      }
+    }
+    for (let t = 0; ; t++) {
+      try { await gifChr.writeValueWithResponse(new Uint8Array([0x03])); break; }
+      catch (error) { if (!device.gatt.connected || t >= 10) throw error; await sleep(100); }
+    }
+    st = await readGif();
+    for (let t = 0; st.state === 1 && t < 50; t++) { await sleep(100); st = await readGif(); }
+    if (st.state !== 2 || st.error) throw new Error();
+    gifProgress(total, total);
+    toast('Đã gửi ảnh lên HUD', 'ok');
+  }));
+  $('gifDelete').addEventListener('click', () => {
+    if (!confirm('Xoá ảnh màn chờ trên HUD?')) return;
+    gifRun(async () => {
+      await gifChr.writeValueWithResponse(new Uint8Array([0x04]));
+      let st = await readGif();
+      for (let t = 0; (st.state !== 0 || st.error) && st.state !== 3 && t < 100; t++) { await sleep(100); st = await readGif(); }
+      if (st.state !== 0 || st.error) throw new Error();
+      toast('Đã xoá ảnh màn chờ.', 'ok');
+    });
+  });
+
+  $('copy').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(location.href); toast('Đã sao chép link.', 'ok'); }
+    catch { toast('Không sao chép được. Hãy sao chép link từ thanh địa chỉ.', 'error'); }
+  });
+
+  if (!navigator.bluetooth) {
+    const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    $('unsupportedText').textContent = ios
+      ? 'Safari và Chrome trên iPhone, iPad không hỗ trợ Bluetooth web. Cài trình duyệt Bluefy (miễn phí) rồi mở trang này trong Bluefy.'
+      : 'Hãy mở trang này bằng Chrome trên Android hoặc Chrome / Edge trên máy tính.';
+    $('iosHelp').hidden = !ios;
+    setMode('unsupported');
+  } else setMode('disconnected');
+</script>
+</body>
+</html>

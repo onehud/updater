@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#070b12">
+<title>Cập nhật firmware · OneHUD</title>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-2VN4M585CR"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-2VN4M585CR');
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root {
+    --bg:      #070b12;
+    --surface: #0e1520;
+    --surface2:#141d2e;
+    --border:  #1e2d45;
+    --accent:  #00d4ff;
+    --green:   #00e5a0;
+    --yellow:  #ffd700;
+    --red:     #ff4757;
+    --text:    #e8edf5;
+    --muted:   #6b7f99;
+    --font:    'Space Grotesk', sans-serif;
+    --mono:    'JetBrains Mono', monospace;
+    --ease:    cubic-bezier(.22,1,.36,1);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body {
+    background:var(--bg); color:var(--text); font-family:var(--font);
+    min-height:100vh; overflow-x:hidden; -webkit-tap-highlight-color:transparent;
+  }
+  :focus-visible { outline:2px solid var(--accent); outline-offset:3px; border-radius:6px; }
+
+  /* ── HEADER (same as settings page) ── */
+  header {
+    padding:48px 48px 32px; border-bottom:1px solid var(--border);
+    background:linear-gradient(135deg,#0e1520 0%,#070b12 100%);
+    position:relative; overflow:hidden;
+  }
+  header::before {
+    content:''; position:absolute; top:-60px; right:-60px; width:300px; height:300px;
+    background:radial-gradient(circle,rgba(0,212,255,.08) 0%,transparent 70%); pointer-events:none;
+  }
+  .header-tag {
+    font-family:var(--mono); font-size:11px; color:var(--accent);
+    letter-spacing:3px; text-transform:uppercase; margin-bottom:12px; opacity:.8;
+  }
+  header h1 { font-size:clamp(28px,4vw,48px); font-weight:700; letter-spacing:-1px; line-height:1.1; }
+  header h1 span { color:var(--accent); }
+  .header-meta { display:flex; gap:10px; margin-top:20px; flex-wrap:wrap; }
+  .header-meta > span {
+    font-family:var(--mono); font-size:12px; color:var(--muted);
+    padding:4px 12px; border:1px solid var(--border); border-radius:4px; background:rgba(255,255,255,.02);
+  }
+  .header-meta > span b { color:var(--accent); font-weight:600; }
+  .back-link {
+    display:inline-flex; align-items:center; gap:6px; margin-top:16px; min-height:32px;
+    font-family:var(--mono); font-size:11px; color:var(--muted); text-decoration:none; transition:color .2s;
+  }
+  .back-link:hover { color:var(--accent); }
+
+  /* ── LAYOUT ── */
+  main { padding:8px 48px 0; max-width:640px; margin:0 auto; }
+  .section-title {
+    font-size:11px; font-family:var(--mono); color:var(--accent);
+    letter-spacing:3px; text-transform:uppercase; margin:36px 0 14px;
+    display:flex; align-items:center; gap:12px;
+  }
+  .section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+  .panel { background:var(--surface); border:1px solid var(--border); border-radius:14px; }
+  .link-panel { padding:24px; display:grid; gap:18px; }
+  .link-state { display:flex; align-items:center; gap:14px; }
+  .link-icon {
+    width:48px; height:48px; border-radius:12px; flex-shrink:0;
+    display:grid; place-items:center; font-size:20px;
+    border:1px solid var(--border); background:var(--surface2); color:var(--muted);
+    transition:color .3s, border-color .3s, background .3s;
+  }
+  .link-state strong { display:block; font-size:16px; font-weight:600; }
+  .link-state small { display:block; font-family:var(--mono); font-size:12px; color:var(--muted); margin-top:2px; overflow-wrap:anywhere; }
+  body[data-mode="connecting"] #linkIcon, body[data-mode="sending"] #linkIcon { color:var(--accent); border-color:rgba(0,212,255,.4); }
+  body[data-mode="connecting"] #linkIcon i, body[data-mode="sending"] #linkIcon i { animation:pulse 1.2s var(--ease) infinite; }
+  body[data-mode="done"] #linkIcon { color:var(--green); border-color:rgba(0,229,160,.4); background:rgba(0,229,160,.06); }
+  body[data-mode="failed"] #linkIcon { color:var(--red); border-color:rgba(255,71,87,.4); }
+  #fileIcon.ready { color:var(--green); border-color:rgba(0,229,160,.4); background:rgba(0,229,160,.06); }
+  @keyframes pulse { 50% { opacity:.35; } }
+  .prep { display:grid; gap:10px; list-style:none; counter-reset:prep; }
+  .prep li {
+    counter-increment:prep; display:grid; grid-template-columns:28px 1fr; gap:10px;
+    font-size:13px; color:var(--muted); line-height:1.5;
+  }
+  .prep li::before {
+    content:counter(prep); width:24px; height:24px; border-radius:6px;
+    display:grid; place-items:center; font-family:var(--mono); font-size:11px; font-weight:700;
+    color:var(--accent); border:1px solid rgba(0,212,255,.35); background:rgba(0,212,255,.06);
+  }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display:inline-flex; align-items:center; justify-content:center; gap:10px;
+    min-height:48px; padding:0 20px; border-radius:10px; width:100%;
+    font-family:var(--mono); font-weight:600; font-size:13px; letter-spacing:.3px;
+    text-decoration:none; cursor:pointer; white-space:nowrap;
+    border:1px solid var(--border); color:var(--muted); background:var(--surface2);
+    transition:background .2s, box-shadow .2s, color .2s, border-color .2s, transform .2s var(--ease);
+  }
+  .btn:active:not(:disabled) { transform:scale(.98); }
+  .btn:disabled { opacity:.45; cursor:default; }
+  .btn-primary { border-color:var(--accent); color:var(--accent); background:rgba(0,212,255,.08); }
+  .btn-primary:hover:not(:disabled) { background:rgba(0,212,255,.14); box-shadow:0 0 18px rgba(0,212,255,.18); }
+  .btn-solid { border-color:var(--accent); color:#04121a; background:var(--accent); }
+  .btn-solid:hover:not(:disabled) { box-shadow:0 0 22px rgba(0,212,255,.3); }
+  input[type="file"] { position:absolute; width:1px; height:1px; opacity:0; }
+  input[type="file"]:focus-visible + .btn { outline:2px solid var(--accent); outline-offset:3px; }
+
+  /* ── PROGRESS ── */
+  .bar { height:12px; border-radius:12px; background:var(--bg); border:1px solid var(--border); overflow:hidden; }
+  .bar > div { height:100%; width:0; border-radius:12px; background:var(--accent); transition:width .2s linear; }
+  body[data-mode="done"] .bar > div { background:var(--green); }
+  body[data-mode="failed"] .bar > div { background:var(--red); }
+  .stats { display:flex; justify-content:space-between; font-family:var(--mono); font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .stats b { color:var(--text); font-size:15px; }
+
+  /* ── NOTICE ── */
+  .notice {
+    margin-top:14px; padding:12px 16px; border-radius:10px; font-size:13px; line-height:1.55;
+    border:1px solid var(--border); background:var(--surface2); color:var(--text);
+    display:flex; gap:10px; align-items:flex-start; overflow-wrap:anywhere;
+  }
+  .notice:empty { display:none; }
+  .notice::before { font-family:'Font Awesome 6 Free'; font-weight:900; content:'\f05a'; color:var(--accent); }
+  .notice[data-tone="ok"] { border-color:rgba(0,229,160,.35); background:rgba(0,229,160,.06); }
+  .notice[data-tone="ok"]::before { content:'\f00c'; color:var(--green); }
+  .notice[data-tone="error"] { border-color:rgba(255,71,87,.4); background:rgba(255,71,87,.07); }
+  .notice[data-tone="error"]::before { content:'\f071'; color:var(--red); }
+
+  .unsupported { padding:24px; display:grid; gap:14px; }
+  .unsupported h2 { font-size:18px; font-weight:600; }
+  .unsupported p { font-size:14px; color:var(--muted); line-height:1.6; }
+  .hint { font-size:13px; color:var(--muted); line-height:1.55; }
+  .board-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+  .board-grid .btn { padding:0 8px; }
+  .board-grid .btn[hidden] { display:none; }
+  .warn { display:flex; gap:8px; font-size:12px; color:var(--muted); line-height:1.5; }
+  .warn i { color:var(--yellow); margin-top:2px; }
+
+  footer {
+    padding:32px 48px; border-top:1px solid var(--border); margin-top:40px;
+    color:var(--muted); font-size:12px; font-family:var(--mono); text-align:center;
+  }
+
+  @media (max-width:640px) {
+    header { padding:32px 16px 24px; }
+    main { padding:0 16px 0; }
+    .link-panel, .unsupported { padding:20px 16px; }
+    footer { padding:24px 16px; }
+  }
+  @media (prefers-reduced-motion:reduce) { * { transition:none !important; animation:none !important; } }
+</style>
+</head>
+<body data-mode="idle">
+
+<header>
+  <div class="header-tag">// firmware update</div>
+  <h1>Cập nhật <span>firmware</span></h1>
+  <div class="header-meta">
+    <span><i class="fab fa-bluetooth-b"></i> Bluetooth</span>
+    <span>Android / máy tính: <b>Chrome, Edge</b></span>
+    <span>iPhone: <b>Bluefy</b></span>
+  </div>
+  <a href="../index.html" class="back-link"><i class="fas fa-arrow-left"></i> Quay lại trang chính</a>
+</header>
+
+<main>
+  <section id="unsupported" hidden>
+    <div class="section-title">Trình duyệt</div>
+    <div class="panel unsupported">
+      <h2>Trình duyệt chưa hỗ trợ Bluetooth</h2>
+      <p id="unsupportedText"></p>
+      <div id="iosHelp" hidden style="display:grid; gap:10px;">
+        <a class="btn btn-primary" href="https://apps.apple.com/app/bluefy-web-ble-browser/id1492822055" target="_blank" rel="noopener noreferrer"><i class="fab fa-app-store-ios"></i> Cài Bluefy trên App Store</a>
+        <button id="copy" type="button" class="btn"><i class="fas fa-link"></i> Sao chép link trang này</button>
+        <p class="hint">Mở Bluefy, dán link vào thanh địa chỉ rồi làm lại các bước.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="app">
+    <div class="section-title">1 · Firmware</div>
+    <div class="panel link-panel">
+      <div class="link-state">
+        <div class="link-icon" id="fileIcon"><i class="fas fa-microchip"></i></div>
+        <div>
+          <strong id="fileName">Tự chọn theo loại HUD</strong>
+          <small id="fileInfo">Trang tự tải firmware mới nhất sau khi kết nối</small>
+        </div>
+      </div>
+      <div id="picker" hidden style="display:grid;">
+        <input id="file" type="file" accept=".bin,application/octet-stream">
+        <label for="file" class="btn btn-primary"><i class="fas fa-folder-open"></i> Chọn file firmware</label>
+      </div>
+      <div id="boards" hidden style="display:grid; gap:10px;">
+        <p class="hint">HUD đang ở chế độ cập nhật nên không tự nhận ra loại HUD. Chọn loại HUD của bạn:</p>
+        <div class="board-grid">
+          <button type="button" class="btn btn-primary" data-board="128">1.28" ESP32</button>
+          <button type="button" class="btn btn-primary" data-board="c3">1.28" C3</button>
+          <button type="button" class="btn btn-primary" data-board="18">1.8" ESP32</button>
+          <button type="button" class="btn btn-primary" data-board="s318">1.8" ESP32-S3</button>
+          <button type="button" class="btn btn-primary" data-board="proxy">Bộ proxy</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">2 · Cập nhật</div>
+    <div class="panel link-panel">
+      <div class="link-state">
+        <div class="link-icon" id="linkIcon"><i class="fab fa-bluetooth-b"></i></div>
+        <div>
+          <strong id="status" role="status">Chưa kết nối</strong>
+          <small id="statusSub">VIETMAP_HUD hoặc OneHUD-…</small>
+        </div>
+      </div>
+      <ol id="help" class="prep">
+        <li>Bật HUD, để HUD ở chế độ Bluetooth.</li>
+        <li>Ngắt kết nối hoặc đóng app VietMap: HUD chỉ nhận một kết nối mỗi lần.</li>
+        <li>Nhấn kết nối, chọn VIETMAP_HUD (hoặc OneHUD-… nếu HUD đang ở chế độ cập nhật).</li>
+        <li>Giữ màn hình điện thoại sáng và đứng gần HUD tới khi xong.</li>
+      </ol>
+      <div id="progress" hidden style="display:grid; gap:10px;">
+        <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="bar"><div id="fill"></div></div>
+        <div class="stats"><b id="percent">0%</b><span id="speed"></span><span id="bytes"></span></div>
+      </div>
+      <button id="connect" type="button" class="btn btn-solid"><i class="fab fa-bluetooth-b"></i> <span>Kết nối HUD</span></button>
+      <button id="retry" type="button" class="btn btn-primary" hidden><i class="fas fa-rotate-right"></i> Thử lại</button>
+      <div id="usb" hidden style="display:grid; gap:10px;">
+        <p class="hint">Firmware trên HUD là bản cũ, chưa cập nhật qua Bluetooth được (HUD chưa bị thay đổi). Nạp một lần bằng cáp USB trên máy tính (Chrome hoặc Edge), sau đó cập nhật qua Bluetooth như bình thường.</p>
+        <p class="hint" id="usbPick" hidden>Chọn loại HUD của bạn để nạp:</p>
+        <div class="board-grid" id="usbBoards"></div>
+        <button id="usbFlash" type="button" class="btn btn-solid"><i class="fas fa-plug"></i> <span>Nạp bằng cáp USB (một lần)</span></button>
+      </div>
+      <button id="exit" type="button" class="btn" hidden><i class="fas fa-right-from-bracket"></i> Thoát chế độ cập nhật</button>
+      <p class="warn"><i class="fas fa-triangle-exclamation"></i><span>Đang cập nhật mà mất kết nối thì HUD vẫn ở chế độ cập nhật, chỉ cần thử lại.</span></p>
+    </div>
+  </section>
+
+  <p id="notice" class="notice" role="status" aria-live="polite" aria-atomic="true"></p>
+</main>
+
+<footer>&copy; <span id="currentYear"></span> OneHUD Team</footer>
+
+<script type="module">
+  import { loadPackage, sha256, UNSIGNED } from './package.js';
+  const ESPTOOL = 'https://esm.sh/esptool-js@0.4.3';
+  const CHIP_OF = { 128: 'ESP32', 18: 'ESP32', proxy: 'ESP32', c3: 'ESP32-C3', s318: 'ESP32-S3' };
+  const UPD_SVC = '6f6e6875-6400-4f54-4100-000000000001';
+  const UPD = (n) => `6f6e6875-6400-4f54-4100-00000000000${n}`;
+  const CTRL = UPD(2), DATA = UPD(3), STATUS = UPD(4);
+  const APP_SVC = '0000fff0-0000-1000-8000-00805f9b34fb';
+  const FFF4 = '0000fff4-0000-1000-8000-00805f9b34fb';
+  const FFF5 = '0000fff5-0000-1000-8000-00805f9b34fb';
+  const CHUNK = 508, CHUNK_SAFE = 240, PACE = 64, E_OFFSET = 5;
+  const BOARD_BY_CAPS = { 0x0d: '128', 0x0e: 'c3', 0x05: '18', 0x02: 's318' };
+  const BOARD_NAME = { 128: '1.28" ESP32', c3: '1.28" ESP32-C3', 18: '1.8" ESP32', s318: '1.8" ESP32-S3', proxy: 'Bộ proxy' };
+  const STATES = ['IDLE', 'RECEIVING', 'DONE', 'ERROR'];
+  const ERRORS = ['OK', 'HEADER', 'SIZE', 'FLAGS', 'STATE', 'OFFSET', 'LEN', 'INCOMPLETE', 'SHA', 'IMAGE', 'FLASH', 'SIG'];
+  const CMD_EXIT = 0x04, CMD_LICENSE = 0x05;
+  const ERROR_VI = {
+    HEADER: 'file firmware không hợp lệ', SIZE: 'file firmware quá lớn', FLAGS: 'file firmware không hợp lệ',
+    STATE: 'HUD đang bận', OFFSET: 'truyền dữ liệu bị lỗi', LEN: 'truyền dữ liệu bị lỗi',
+    INCOMPLETE: 'chưa nhận đủ dữ liệu', SHA: 'file firmware bị hỏng', IMAGE: 'file firmware không hợp lệ',
+    FLASH: 'HUD ghi firmware bị lỗi', SIG: UNSIGNED.toLowerCase(),
+  };
+  const query = new URLSearchParams(location.search);
+  const manual = query.get('mode') === 'manual';
+  const expected = (query.get('board') || '').split(',').filter((b) => b in BOARD_NAME);
+  const $ = (id) => document.getElementById(id);
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  let pkg = null, device = null, linkLost = false;
+  let atUpdater = false;
+  let usbBoard = null;
+  $('currentYear').textContent = new Date().getFullYear();
+
+  const toast = (message, tone = 'info') => { $('notice').textContent = message; $('notice').dataset.tone = tone; };
+  const kb = (n) => `${(n / 1024).toFixed(n < 10240 ? 1 : 0)} KB`;
+  const hex = (b) => [...b].map((x) => x.toString(16).padStart(2, '0')).join('');
+
+  class OtaError extends Error {}
+  function parseStatus(view) {
+    const st = { state: view.getUint8(0), received: view.getUint32(1, true), error: view.getUint8(5) };
+    st.stateName = STATES[st.state] ?? st.state;
+    st.errorName = ERRORS[st.error] ?? st.error;
+    return st;
+  }
+  const describe = (st) => `${st.errorName}${ERROR_VI[st.errorName] ? ` (${ERROR_VI[st.errorName]})` : ''}, trạng thái ${st.stateName}, đã nhận ${st.received} B`;
+
+  function setMode(mode, label) {
+    document.body.dataset.mode = mode;
+    const busy = ['connecting', 'reboot', 'sending', 'flashing'].includes(mode);
+    $('connect').disabled = busy;
+    $('connect').hidden = ['reboot', 'board', 'pick', 'sending', 'done'].includes(mode);
+    $('connect').querySelector('span').textContent = busy ? 'Đang kết nối…' : 'Kết nối HUD';
+    $('retry').hidden = mode !== 'failed' || !device || !pkg;
+    $('file').disabled = busy;
+    $('picker').hidden = mode !== 'pick';
+    $('boards').hidden = mode !== 'board';
+    $('help').hidden = !['idle', 'failed'].includes(mode);
+    $('progress').hidden = !['sending', 'done', 'failed', 'flashing'].includes(mode);
+    $('usb').hidden = mode !== 'usb';
+    $('exit').hidden = !(['board', 'pick'].includes(mode) || (mode === 'failed' && atUpdater));
+    if (label) $('status').textContent = label;
+  }
+  function showProgress(received, total, t0, sent) {
+    const pct = Math.floor(received * 100 / total);
+    $('fill').style.width = `${pct}%`;
+    $('bar').setAttribute('aria-valuenow', pct);
+    $('percent').textContent = `${pct}%`;
+    $('bytes').textContent = `${kb(received)} / ${kb(total)}`;
+    const secs = (performance.now() - t0) / 1000;
+    $('speed').textContent = secs > 0.5 ? `${(sent / 1024 / secs).toFixed(1)} KB/s` : '';
+  }
+
+  async function usePackage(name, bytes) {
+    pkg = null; $('fileIcon').classList.remove('ready');
+    $('fileName').textContent = name;
+    pkg = await loadPackage(bytes);
+    $('fileInfo').textContent = `${kb(pkg.image.length)}`;
+    $('fileIcon').classList.add('ready');
+  }
+  const getFile = (path) => fetch(path, { cache: 'no-cache' }).then((res) => (res.ok ? res : null), () => null);
+  async function fetchFirmware(board) {
+    const name = BOARD_NAME[board];
+    $('fileName').textContent = `HUD ${name}`;
+    $('fileInfo').textContent = 'Đang tải firmware…';
+    const index = await (await getFile('../firmware/ota.json'))?.json().catch(() => null);
+    if (!index) throw new OtaError('Chưa tải được danh sách firmware (firmware/ota.json). Kiểm tra mạng rồi thử lại.');
+    const rel = index[board];
+    if (!rel?.file || !rel.sha256) throw new OtaError(`Chưa có bản cập nhật cho HUD ${name}.`);
+    $('fileName').textContent = `HUD ${name} · v${rel.version}`;
+    const res = await getFile(`../firmware/${rel.file}`);
+    if (!res) throw new OtaError(`Chưa tải được firmware v${rel.version} cho HUD ${name} (firmware/${rel.file}). Kiểm tra mạng rồi thử lại.`);
+    await usePackage(`v${rel.version} · HUD ${name}`, new Uint8Array(await res.arrayBuffer()));
+    if (pkg.image.length !== rel.size || hex(pkg.header.subarray(16, 48)) !== rel.sha256.toLowerCase()) {
+      pkg = null; $('fileIcon').classList.remove('ready');
+      throw new OtaError(`File firmware v${rel.version} tải về bị hỏng hoặc trang đang được cập nhật. Thử lại sau ít phút.`);
+    }
+  }
+
+  $('file').addEventListener('change', async () => {
+    const file = $('file').files[0];
+    if (!file) return;
+    $('file').value = '';
+    toast('');
+    try { await usePackage(file.name, new Uint8Array(await file.arrayBuffer())); }
+    catch (error) { $('fileInfo').textContent = 'Không dùng được file này'; toast(error.message, 'error'); return; }
+    if (!device?.gatt.connected) { setMode('idle', 'Chưa kết nối'); toast(LOST_BEFORE_FILE, 'error'); return; }
+    await run(device.gatt);
+  });
+
+  const LOST_BEFORE_FILE = 'Mất kết nối — bấm Kết nối HUD lại';
+  function onDisconnected() {
+    linkLost = true;
+    if (document.body.dataset.mode === 'pick') { setMode('idle', 'Chưa kết nối'); toast(LOST_BEFORE_FILE, 'error'); }
+  }
+  function askForFile(hint) {
+    $('fileName').textContent = hint;
+    $('fileInfo').textContent = 'Chọn file firmware .bin, tải lên bắt đầu ngay';
+    setMode('pick', 'Đã kết nối chế độ cập nhật');
+  }
+  const hasService = (server, uuid) => server.getPrimaryService(uuid).then(() => true, (error) => {
+    if (error.name === 'NotFoundError') return false;
+    throw error;
+  });
+
+  $('connect').addEventListener('click', async () => {
+    setMode('connecting', 'Đang kết nối…'); toast('');
+    let stage = 'chooser', found = null;
+    atUpdater = false;
+    try {
+      if (device) device.removeEventListener('gattserverdisconnected', onDisconnected);
+      device = await navigator.bluetooth.requestDevice({
+        filters: [{ services: [UPD_SVC] }, { namePrefix: 'OneHUD-' }, { namePrefix: 'VIETMAP_HUD' }, { services: [APP_SVC] }],
+        optionalServices: [UPD_SVC, APP_SVC],
+      });
+      device.addEventListener('gattserverdisconnected', onDisconnected);
+      stage = 'connect';
+      const server = await device.gatt.connect();
+      $('statusSub').textContent = device.name || '';
+      if (await hasService(server, UPD_SVC)) {
+        atUpdater = true;
+        if (manual) return askForFile('Chọn file firmware cho HUD của bạn');
+        const known = expected.length === 1 ? expected[0] : usbBoard;
+        if (known) {
+          stage = 'fetch';
+          await fetchFirmware(known);
+          return run(server);
+        }
+        setMode('board', 'Đã kết nối chế độ cập nhật');
+        return;
+      }
+      stage = 'enter';
+      const app = await server.getPrimaryService(APP_SVC);
+      let hint = 'Chọn file firmware cho HUD của bạn';
+      if (manual) {
+        const caps = await app.getCharacteristic(FFF4).then((c) => c.readValue()).then((v) => v.getUint8(1), () => null);
+        const board = BOARD_BY_CAPS[caps];
+        found = board;
+        if (board) hint = `HUD ${BOARD_NAME[board]} · chọn file firmware`;
+        $('fileName').textContent = board ? `HUD ${BOARD_NAME[board]}` : 'Không rõ loại HUD';
+      } else {
+        const fff4 = await app.getCharacteristic(FFF4).catch((error) => {
+          if (error.name === 'NotFoundError' && expected.join() === 'proxy') return null;
+          throw error;
+        });
+        const board = fff4 ? BOARD_BY_CAPS[(await fff4.readValue()).getUint8(1)] : 'proxy';
+        if (!board) throw new OtaError('Chưa hỗ trợ cập nhật cho loại HUD này.');
+        found = board;
+        if (expected.length && !expected.includes(board)) {
+          throw new OtaError(`Sai firmware: HUD đang kết nối là loại ${BOARD_NAME[board]}, còn trang này cập nhật cho ${expected.map((b) => BOARD_NAME[b]).join(' / ')}. HUD chưa bị thay đổi. Hãy mở trang cập nhật đúng dòng HUD của bạn.`);
+        }
+        stage = 'fetch';
+        await fetchFirmware(board);
+        stage = 'enter';
+      }
+      const fff5 = await app.getCharacteristic(FFF5);
+      try { await fff5.writeValueWithResponse(new Uint8Array([0xb0, 0x07])); }
+      catch { }
+      if (device.gatt.connected) device.gatt.disconnect();
+      usbBoard = found;
+      setMode('idle', 'HUD đã vào chế độ cập nhật');
+      toast('HUD đã vào chế độ cập nhật (màn đen). Bấm Kết nối HUD lần nữa và chọn OneHUD-… trong danh sách.', 'ok');
+    } catch (error) {
+      if (device?.gatt.connected) device.gatt.disconnect();
+      setMode('idle', 'Chưa kết nối');
+      if (stage === 'chooser' && error.name === 'NotFoundError') return;
+      if (error instanceof OtaError) toast(error.message, 'error');
+      else if (stage === 'enter' && error.name === 'NotFoundError') {
+        offerUsb(found || (expected.length === 1 ? expected[0] : null));
+      } else toast('Không kết nối được. Ngắt kết nối app VietMap với HUD (hoặc đóng app), đứng gần HUD rồi thử lại.', 'error');
+    }
+  });
+
+  document.querySelectorAll('[data-board]').forEach((btn) => btn.addEventListener('click', async () => {
+    setMode('connecting', 'Đang tải firmware…'); toast('');
+    try {
+      await fetchFirmware(btn.dataset.board);
+      await run(device.gatt.connected ? device.gatt : await device.gatt.connect());
+    } catch (error) {
+      setMode('board', 'Đã kết nối chế độ cập nhật');
+      toast(error instanceof OtaError ? error.message : 'Mất kết nối HUD. Bấm Kết nối HUD để thử lại.', 'error');
+      if (!device.gatt.connected) setMode('idle', 'Chưa kết nối');
+    }
+  }));
+
+  $('retry').addEventListener('click', async () => {
+    setMode('connecting', 'Đang kết nối lại…'); toast('');
+    try { await run(await device.gatt.connect()); }
+    catch { setMode('idle', 'Chưa kết nối'); toast('Không kết nối lại được. Bấm Kết nối HUD và chọn OneHUD-….', 'error'); }
+  });
+
+  async function run(server) {
+    $('statusSub').textContent = device.name || 'OneHUD';
+    let wake = null;
+    try { wake = await navigator.wakeLock?.request('screen'); } catch { }
+    try {
+      await transfer(server);
+      setMode('done', 'Cập nhật xong');
+    } catch (error) {
+      const lost = linkLost || !device.gatt.connected;
+      setMode('failed', lost ? 'Mất kết nối' : 'Cập nhật lỗi');
+      toast(lost ? 'Mất kết nối với HUD giữa chừng. Đứng gần HUD rồi bấm Thử lại (gửi lại từ đầu).'
+        : error instanceof OtaError ? error.message : `Lỗi Bluetooth: ${error.message}`, 'error');
+    } finally {
+      wake?.release().catch(() => {});
+      if (device.gatt.connected && document.body.dataset.mode !== 'done') device.gatt.disconnect();
+    }
+  }
+
+  async function transfer(server) {
+    linkLost = false;
+    const { begin: signed, image } = pkg, total = image.length;
+    setMode('sending', 'Đang bắt đầu…');
+    showProgress(0, total, performance.now(), 0);
+    const svc = await server.getPrimaryService(UPD_SVC);
+    const [ctrl, data, status] = await Promise.all([CTRL, DATA, STATUS].map((u) => svc.getCharacteristic(u)));
+    let note = null;
+    status.addEventListener('characteristicvaluechanged', (e) => { note = parseStatus(e.target.value); });
+    await status.startNotifications();
+    licenseOk = await sendLicense(ctrl, status);
+    const begin = new Uint8Array(1 + signed.length);
+    begin[0] = 0x01; begin.set(signed, 1);
+    await ctrl.writeValueWithResponse(begin);
+    let st = parseStatus(await status.readValue());
+    if (st.errorName === 'SIG') throw new OtaError(`${UNSIGNED}. HUD chưa bị thay đổi.`);
+    if (st.state !== 1) throw new OtaError(`HUD từ chối gói (BEGIN): ${describe(st)}.`);
+    note = null;
+
+    $('status').textContent = 'Đang gửi firmware';
+    let off = 0, chunk = CHUNK, sent = 0, sinceRead = 0;
+    const t0 = performance.now();
+    const packet = new Uint8Array(4 + CHUNK), view = new DataView(packet.buffer);
+    while (off < total) {
+      if (linkLost) throw new Error('disconnected');
+      if (note) {
+        const n = note; note = null;
+        if (n.state !== 1) throw new OtaError(`Truyền lỗi: ${describe(n)}.`);
+        if (n.error === E_OFFSET) off = n.received;
+      }
+      const n = Math.min(chunk, total - off);
+      view.setUint32(0, off, true);
+      packet.set(image.subarray(off, off + n), 4);
+      try {
+        await data.writeValueWithoutResponse(packet.subarray(0, 4 + n));
+      } catch (error) {
+        if (linkLost || !device.gatt.connected || chunk === CHUNK_SAFE) throw error;
+        chunk = CHUNK_SAFE; continue;
+      }
+      off += n; sent += n;
+      if (++sinceRead >= PACE || off === total) {
+        sinceRead = 0;
+        st = parseStatus(await status.readValue());
+        if (st.state !== 1) throw new OtaError(`Truyền lỗi: ${describe(st)}.`);
+        off = st.received;
+        showProgress(off, total, t0, sent);
+      }
+    }
+    $('status').textContent = 'Đang kiểm tra ảnh…';
+    await ctrl.writeValueWithResponse(new Uint8Array([0x02]));
+    st = parseStatus(await status.readValue());
+    if (st.state !== 2) throw new OtaError(`HUD không nhận ảnh (END): ${describe(st)}.`);
+    showProgress(total, total, t0, sent);
+    toast(licenseOk ? 'Đã cập nhật xong, chúc bạn vui vẻ'
+      : 'Đã cập nhật xong, nhưng HUD chưa được kích hoạt: nếu HUD báo chưa được cấp phép, hãy liên hệ người bán.', 'ok');
+  }
+
+  let licenseOk = true;
+  async function sendLicense(ctrl, status) {
+    const m = /^OneHUD-((?:[0-9A-F]{2}:){5}[0-9A-F]{2})$/i.exec(device.name || '');
+    if (!m) return true;
+    const base = (BigInt(`0x${m[1].replaceAll(':', '')}`) - 2n + (1n << 48n)) % (1n << 48n);
+    const mac = new Uint8Array(6);
+    for (let i = 0; i < 6; i++) mac[5 - i] = Number((base >> BigInt(8 * i)) & 0xffn);
+    const res = await getFile(`../licenses/${hex(await sha256(mac))}.lic`);
+    const sig = res ? new Uint8Array(await res.arrayBuffer()) : null;
+    if (sig?.length !== 64) return true;
+    const cmd = new Uint8Array(1 + sig.length);
+    cmd[0] = CMD_LICENSE; cmd.set(sig, 1);
+    await ctrl.writeValueWithResponse(cmd);
+    return parseStatus(await status.readValue()).errorName === 'OK';
+  }
+
+  $('exit').addEventListener('click', async () => {
+    const prev = document.body.dataset.mode;
+    setMode('connecting', 'Đang thoát chế độ cập nhật…'); toast('');
+    try {
+      const server = device.gatt.connected ? device.gatt : await device.gatt.connect();
+      const svc = await server.getPrimaryService(UPD_SVC);
+      await (await svc.getCharacteristic(CTRL)).writeValueWithResponse(new Uint8Array([CMD_EXIT]));
+      const st = await svc.getCharacteristic(STATUS).then((c) => c.readValue()).then(parseStatus, () => null);
+      if (st && st.errorName !== 'OK') {
+        setMode(prev, prev === 'failed' ? 'Cập nhật lỗi' : 'Đã kết nối chế độ cập nhật');
+        toast('HUD chưa có firmware dùng được để quay về. Hãy cập nhật firmware.', 'error');
+        return;
+      }
+      atUpdater = false;
+      if (device.gatt.connected) device.gatt.disconnect();
+      setMode('idle', 'Chưa kết nối');
+      toast('HUD đang khởi động lại về chế độ bình thường.', 'ok');
+    } catch {
+      setMode('idle', 'Chưa kết nối');
+      toast('Không gửi được lệnh thoát. Bấm Kết nối HUD, chọn OneHUD-… rồi thử lại.', 'error');
+    }
+  });
+
+  function offerUsb(board) {
+    usbBoard = null;
+    const boards = board ? [board] : (expected.length ? expected : Object.keys(BOARD_NAME));
+    $('usbPick').hidden = boards.length === 1;
+    $('usbFlash').hidden = boards.length !== 1;
+    $('usbFlash').dataset.board = boards[0];
+    $('usbBoards').replaceChildren(...(boards.length === 1 ? [] : boards.map((b) => {
+      const btn = document.createElement('button');
+      btn.type = 'button'; btn.className = 'btn btn-primary'; btn.textContent = BOARD_NAME[b];
+      btn.addEventListener('click', () => flashUsb(b));
+      return btn;
+    })));
+    setMode('usb', 'Firmware HUD là bản cũ');
+    toast('HUD đang chạy firmware cũ, chưa có chế độ cập nhật qua Bluetooth. Nạp bằng cáp USB một lần.', 'error');
+  }
+  $('usbFlash').addEventListener('click', () => flashUsb($('usbFlash').dataset.board));
+
+  async function flashUsb(board) {
+    if (!('serial' in navigator)) {
+      toast('Nạp bằng cáp cần Chrome hoặc Edge trên máy tính (Web Serial).', 'error');
+      return;
+    }
+    let port = null, transport = null;
+    try {
+      port = await navigator.serial.requestPort();
+    } catch { return; }
+    setMode('flashing', 'Đang nạp bằng cáp USB…'); toast('');
+    try {
+      const res = await getFile(`../firmware/${board}_boot.bin`);
+      if (!res) throw new OtaError(`Chưa tải được ảnh nạp cáp cho HUD ${BOARD_NAME[board]} (firmware/${board}_boot.bin). Kiểm tra mạng rồi thử lại.`);
+      const img = new Uint8Array(await res.arrayBuffer());
+      const { ESPLoader, Transport } = await import(ESPTOOL);
+      transport = new Transport(port, true);
+      const quiet = { clean() {}, writeLine() {}, write() {} };
+      const loader = new ESPLoader({ transport, baudrate: 460800, terminal: quiet, enableTracing: false });
+      await loader.main();
+      const chip = loader.chip?.CHIP_NAME;
+      if (chip !== CHIP_OF[board]) throw new OtaError(`HUD đang cắm cáp dùng chip ${chip || 'không rõ'}, không phải HUD ${BOARD_NAME[board]}. HUD chưa bị thay đổi.`);
+      const t0 = performance.now();
+      await loader.writeFlash({
+        fileArray: [{ data: loader.ui8ToBstr(img), address: 0 }],
+        flashSize: 'keep', flashMode: 'keep', flashFreq: 'keep', eraseAll: false, compress: true,
+        reportProgress: (_, written, total) => showProgress(written, total, t0, written),
+      });
+      await loader.hardReset();
+      usbBoard = board;
+      setMode('idle', 'Đã nạp xong bằng cáp');
+      toast('Đã nạp xong. HUD khởi động lại vào chế độ cập nhật (màn đen). Bấm Kết nối HUD, chọn OneHUD-… để cài firmware.', 'ok');
+    } catch (error) {
+      setMode('usb', 'Nạp bằng cáp lỗi');
+      toast(error instanceof OtaError ? error.message : `Nạp bằng cáp lỗi: ${error.message}. Cắm lại cáp rồi thử lại.`, 'error');
+    } finally {
+      await transport?.disconnect().catch(() => {});
+    }
+  }
+
+  $('copy').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(location.href); toast('Đã sao chép link.', 'ok'); }
+    catch { toast('Không sao chép được. Hãy sao chép link từ thanh địa chỉ.', 'error'); }
+  });
+
+  if (!navigator.bluetooth) {
+    const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    $('unsupportedText').textContent = ios
+      ? 'Safari và Chrome trên iPhone, iPad không hỗ trợ Bluetooth web. Cài trình duyệt Bluefy (miễn phí) rồi mở trang này trong Bluefy.'
+      : 'Hãy mở trang này bằng Chrome hoặc Edge trên Android hoặc máy tính.';
+    $('iosHelp').hidden = !ios;
+    $('unsupported').hidden = false;
+    $('app').hidden = true;
+  } else {
+    if (manual) {
+      $('fileName').textContent = 'Kết nối HUD trước';
+      $('fileInfo').textContent = 'Sau khi kết nối mới chọn file .bin';
+    } else if (expected.length) {
+      $('fileName').textContent = `HUD ${expected.map((b) => BOARD_NAME[b]).join(' / ')}`;
+      document.querySelectorAll('[data-board]').forEach((btn) => { btn.hidden = !expected.includes(btn.dataset.board); });
+    }
+    setMode('idle');
+  }
+</script>
+</body>
+</html>

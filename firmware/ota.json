@@ -1,0 +1,32 @@
+{
+  "128": {
+    "file": "128.bin",
+    "sha256": "37fd71b79e6232e31fdef1b8df16a60c8f4c2f5d970d2a630f4b4903724df08f",
+    "size": 2270144,
+    "version": "3.0.0"
+  },
+  "18": {
+    "file": "18.bin",
+    "sha256": "0404c3a9c345f0e3a6433076a184aa1ddb2955cf91655bb6d3a509931fdd3232",
+    "size": 3170512,
+    "version": "3.0.0"
+  },
+  "c3": {
+    "file": "c3.bin",
+    "sha256": "6c9216fc53a06c2f6c02b505c72c8c9d32b3888dcf745ae00d7a3c028f6f7f56",
+    "size": 2518432,
+    "version": "3.0.0"
+  },
+  "proxy": {
+    "file": "proxy.bin",
+    "sha256": "284bc4bd3b9dec07325ae4397f17fcf70a860f26ddd3e7978df6534700952218",
+    "size": 1345376,
+    "version": "2.0.1"
+  },
+  "s318": {
+    "file": "s318.bin",
+    "sha256": "93e1fba02076639ddf3c78a5ec444b001720faef027d9ff88cb9034d9997ff85",
+    "size": 3541648,
+    "version": "3.0.0"
+  }
+}

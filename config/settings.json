@@ -1,0 +1,33 @@
+{
+  "project": {
+    "name": "OneHUD Firmware Flasher",
+    "version": "2.0.1",
+    "description": "Web-based firmware flasher for OneHUD devices",
+    "author": "VietMap Team"
+  },
+  "supported_devices": [
+    {
+      "id": "proxy",
+      "name": "OneHUD Proxy",
+      "chip_type": "ESP32",
+      "description": "Proxy device for OneHUD system"
+    },
+    {
+      "id": "onehud",
+      "name": "OneHUD",
+      "chip_type": "ESP32-C3",
+      "description": "Main OneHUD device"
+    }
+  ],
+  "flash_settings": {
+    "default_erase": false,
+    "auto_connect": true,
+    "timeout": 30000,
+    "baud_rate": 921600
+  },
+  "ui_settings": {
+    "theme": "auto",
+    "language": "vi",
+    "show_advanced": false
+  }
+}

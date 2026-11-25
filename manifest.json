@@ -1,0 +1,13 @@
+{
+  "name": "OneHUD Proxy",
+  "version": "3.0.0",
+  "new_install_prompt_erase": false,
+  "builds": [
+    {
+      "chipFamily": "ESP32",
+      "parts": [
+        { "path": "firmware/onehud_proxy.bin", "offset": 0 }
+      ]
+    }
+  ]
+}
