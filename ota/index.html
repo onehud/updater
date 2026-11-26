@@ -241,8 +241,9 @@
       </div>
       <button id="connect" type="button" class="btn btn-solid"><i class="fab fa-bluetooth-b"></i> <span>Kết nối HUD</span></button>
       <button id="retry" type="button" class="btn btn-primary" hidden><i class="fas fa-rotate-right"></i> Thử lại</button>
+      <button id="usbEntry" type="button" class="btn" hidden><i class="fas fa-plug"></i> Không vào được chế độ cập nhật? Nạp bằng cáp USB</button>
       <div id="usb" hidden style="display:grid; gap:10px;">
-        <p class="hint">Firmware trên HUD là bản cũ, chưa cập nhật qua Bluetooth được (HUD chưa bị thay đổi). Nạp một lần bằng cáp USB trên máy tính (Chrome hoặc Edge), sau đó cập nhật qua Bluetooth như bình thường.</p>
+        <p class="hint" id="usbWhy">Firmware trên HUD là bản cũ, chưa cập nhật qua Bluetooth được (HUD chưa bị thay đổi). Nạp một lần bằng cáp USB trên máy tính (Chrome hoặc Edge), sau đó cập nhật qua Bluetooth như bình thường.</p>
         <p class="hint" id="usbPick" hidden>Chọn loại HUD của bạn để nạp:</p>
         <div class="board-grid" id="usbBoards"></div>
         <button id="usbFlash" type="button" class="btn btn-solid"><i class="fas fa-plug"></i> <span>Nạp bằng cáp USB (một lần)</span></button>
@@ -328,6 +329,7 @@
     $('help').hidden = !['idle', 'failed'].includes(mode);
     $('progress').hidden = !['sending', 'done', 'failed', 'flashing'].includes(mode);
     $('usb').hidden = mode !== 'usb';
+    $('usbEntry').hidden = !(['idle', 'failed'].includes(mode) && 'serial' in navigator);
     $('exit').hidden = !(['board', 'pick'].includes(mode) || (mode === 'failed' && atUpdater));
     if (label) $('status').textContent = label;
   }
@@ -447,8 +449,9 @@
       catch { }
       if (device.gatt.connected) device.gatt.disconnect();
       usbBoard = found;
-      setMode('idle', 'HUD đã vào chế độ cập nhật');
-      toast('HUD đã vào chế độ cập nhật (màn đen). Bấm Kết nối HUD lần nữa và chọn OneHUD-… trong danh sách.', 'ok');
+      const who = found === 'proxy' ? 'Bộ proxy' : 'HUD';   // proxy không có màn hình
+      setMode('idle', `${who} đã vào chế độ cập nhật`);
+      toast(`${who} đã vào chế độ cập nhật${found === 'proxy' ? '' : ' (màn đen)'}. Bấm Kết nối HUD lần nữa và chọn OneHUD-… trong danh sách. Không thấy OneHUD-… thì mở trang này trên máy tính và bấm Nạp bằng cáp USB.`, 'ok');
     } catch (error) {
       if (device?.gatt.connected) device.gatt.disconnect();
       setMode('idle', 'Chưa kết nối');
@@ -608,9 +611,12 @@
     }
   });
 
-  function offerUsb(board) {
+  const USB_WHY_OLD = $('usbWhy').textContent;
+  const USB_WHY_MANUAL = 'Nạp một lần bằng cáp USB trên máy tính (Chrome hoặc Edge), dùng khi HUD chạy firmware cũ hoặc không vào được chế độ cập nhật. Cài đặt trên HUD được giữ nguyên. Nạp xong cập nhật qua Bluetooth như bình thường.';
+  function offerUsb(board, manual = false) {
     usbBoard = null;
-    const groups = groupsOf(board ? [board] : (expected.length ? expected : Object.keys(BOARD_NAME)));
+    $('usbWhy').textContent = manual ? USB_WHY_MANUAL : USB_WHY_OLD;
+    const groups = groupsOf(board ? [board] : (expected.length ? expected : ['c3', '128', '18', 's318', 'proxy']));   // thứ tự cố định (key số bị JS xếp lên trước)
     $('usbPick').hidden = groups.length === 1;
     $('usbFlash').hidden = groups.length !== 1;
     $('usbFlash').dataset.boards = groups[0][1].join(',');
@@ -620,9 +626,11 @@
       btn.addEventListener('click', () => flashUsb(bs));
       return btn;
     })));
-    setMode('usb', 'Firmware HUD là bản cũ');
-    toast('HUD đang chạy firmware cũ, chưa có chế độ cập nhật qua Bluetooth. Nạp bằng cáp USB một lần.', 'error');
+    setMode('usb', manual ? 'Nạp bằng cáp USB' : 'Firmware HUD là bản cũ');
+    if (manual) toast('Cắm HUD vào máy tính bằng cáp USB rồi bấm nạp.', 'info');
+    else toast('HUD đang chạy firmware cũ, chưa có chế độ cập nhật qua Bluetooth. Nạp bằng cáp USB một lần.', 'error');
   }
+  $('usbEntry').addEventListener('click', () => offerUsb(expected.length === 1 ? expected[0] : null, true));
   $('usbFlash').addEventListener('click', () => flashUsb($('usbFlash').dataset.boards.split(',')));
 
   async function flashUsb(cands) {
@@ -656,7 +664,7 @@
       await loader.hardReset();
       usbBoard = board;
       setMode('idle', 'Đã nạp xong bằng cáp');
-      toast('Đã nạp xong. HUD khởi động lại vào chế độ cập nhật (màn đen). Bấm Kết nối HUD, chọn OneHUD-… để cài firmware.', 'ok');
+      toast('Đã nạp xong. Bấm Kết nối HUD để cài firmware (chọn OneHUD-… hoặc VIETMAP_HUD trong danh sách).', 'ok');
     } catch (error) {
       setMode('usb', 'Nạp bằng cáp lỗi');
       toast(error instanceof OtaError ? error.message : `Nạp bằng cáp lỗi: ${error.message}. Cắm lại cáp rồi thử lại.`, 'error');
