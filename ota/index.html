@@ -305,7 +305,7 @@
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
   let pkg = null, device = null, linkLost = false;
   let atUpdater = false;
-  let usbBoard = null;
+  let usbBoard = null, pkgBoard = null, licSig = Promise.resolve(null);
   $('currentYear').textContent = new Date().getFullYear();
 
   const toast = (message, tone = 'info') => { $('notice').textContent = message; $('notice').dataset.tone = tone; };
@@ -349,7 +349,7 @@
   }
 
   async function usePackage(name, bytes) {
-    pkg = null; $('fileIcon').classList.remove('ready');
+    pkg = null; pkgBoard = null; $('fileIcon').classList.remove('ready');
     $('fileName').textContent = name;
     pkg = await loadPackage(bytes);
     $('fileInfo').textContent = `${kb(pkg.image.length)}`;
@@ -372,6 +372,7 @@
       pkg = null; $('fileIcon').classList.remove('ready');
       throw new OtaError(`File firmware v${rel.version} tải về bị hỏng hoặc trang đang được cập nhật. Thử lại sau ít phút.`);
     }
+    pkgBoard = board;
   }
 
   $('file').addEventListener('change', async () => {
@@ -411,16 +412,22 @@
         optionalServices: [UPD_SVC, APP_SVC],
       });
       device.addEventListener('gattserverdisconnected', onDisconnected);
+      // downloads happen before the link opens: Bluefy loses GATT calls after a long idle download
+      licSig = licenseFor(device.name).catch(() => null);
+      const cands = usbBoard ? [usbBoard] : (expected.length && groupsOf(expected).length === 1 ? expected : null);
+      if (!manual && cands && /^OneHUD-/.test(device.name || '') && pkgBoard !== cands[0]) {
+        stage = 'fetch';
+        await fetchFirmware(cands[0]);
+      }
       stage = 'connect';
       const server = await device.gatt.connect();
       $('statusSub').textContent = device.name || '';
       if (await hasService(server, UPD_SVC)) {
         atUpdater = true;
         if (manual) return askForFile('Chọn file firmware cho HUD của bạn');
-        const cands = usbBoard ? [usbBoard] : (expected.length && groupsOf(expected).length === 1 ? expected : null);
         if (cands) {
           stage = 'fetch';
-          await fetchFirmware(cands[0]);
+          if (pkgBoard !== cands[0]) await fetchFirmware(cands[0]);
           return run(server, cands);
         }
         setMode('board', 'Đã kết nối chế độ cập nhật');
@@ -514,13 +521,14 @@
   // Bluefy (iOS) sometimes never settles a GATT promise: bound each one, re-read status, else use the last notify
   const TIMEOUT = 'BluefyTimeout';
   const within = (p, ms = 4000) => Promise.race([p, new Promise((_, no) => setTimeout(() => no(new Error(TIMEOUT)), ms))]);
-  let lastStatus = null;
+  let lastStatus = null, misses = 0;
   async function readStatus(status) {
     for (let i = 0; i < 3; i++) {
       try { return parseStatus(await within(status.readValue())); }
       catch (error) { if (error.message !== TIMEOUT || linkLost) throw error; }
+      misses++;
     }
-    if (lastStatus) return lastStatus;
+    if (lastStatus) return { ...lastStatus, stale: true };
     throw new Error('status read timed out');
   }
 
@@ -538,7 +546,8 @@
     licenseOk = await sendLicense(ctrl, status);
     const begin = new Uint8Array(1 + signed.length);
     begin[0] = 0x01; begin.set(signed, 1);
-    await ctrl.writeValueWithResponse(begin);
+    try { await within(ctrl.writeValueWithResponse(begin), 10000); }
+    catch (error) { if (error.message !== TIMEOUT || linkLost) throw error; }
     let st = await readStatus(status);
     if (st.errorName === 'SIG') throw new OtaError(`${UNSIGNED}. HUD chưa bị thay đổi.`);
     if (st.state !== 1) {
@@ -549,7 +558,8 @@
     note = null;
 
     $('status').textContent = 'Đang gửi firmware';
-    let off = 0, chunk = CHUNK, sent = 0, sinceRead = 0;
+    let off = 0, chunk = CHUNK, sent = 0, sinceRead = 0, stuck = 0, prev = -1;
+    misses = 0;
     const t0 = performance.now();
     const packet = new Uint8Array(4 + CHUNK), view = new DataView(packet.buffer);
     while (off < total) {
@@ -574,8 +584,13 @@
         sinceRead = 0;
         st = await readStatus(status);
         if (st.state !== 1) throw new OtaError(`Truyền lỗi: ${describe(st)}.`);
+        if (st.stale && off === total) break;   // Bluefy lost the reads: END tells whether the HUD has every byte
+        stuck = st.received === prev ? stuck + 1 : 0;
+        prev = st.received;
+        if (stuck >= 20) throw new OtaError(`HUD dừng nhận ở ${st.received}/${total} byte (${describe(st)}, Bluefy lỡ ${misses} lần đọc).`);
         off = st.received;
         showProgress(off, total, t0, sent);
+        if (misses) $('status').textContent = `Đang gửi firmware (Bluefy lỡ ${misses} lần đọc)`;
       }
     }
     $('status').textContent = 'Đang kiểm tra ảnh…';
@@ -583,7 +598,7 @@
     catch (error) { if (error.message !== TIMEOUT || linkLost) throw error; }
     st = await readStatus(status);
     if (st.state !== 2) {
-      const error = new OtaError(`HUD không nhận ảnh (END): ${describe(st)}.`);
+      const error = new OtaError(`HUD không nhận ảnh (END): ${describe(st)}, ${st.received}/${total} byte.`);
       error.wrongImage = st.errorName === 'IMAGE';   // ví dụ firmware OneHUD Pro bản chip khác
       throw error;
     }
@@ -593,18 +608,23 @@
   }
 
   let licenseOk = true;
-  async function sendLicense(ctrl, status) {
-    const m = /^OneHUD-((?:[0-9A-F]{2}:){5}[0-9A-F]{2})$/i.exec(device.name || '');
-    if (!m) return true;
+  async function licenseFor(name) {   // the unit's licence signature, or null
+    const m = /^OneHUD-((?:[0-9A-F]{2}:){5}[0-9A-F]{2})$/i.exec(name || '');
+    if (!m) return null;
     const base = (BigInt(`0x${m[1].replaceAll(':', '')}`) - 2n + (1n << 48n)) % (1n << 48n);
     const mac = new Uint8Array(6);
     for (let i = 0; i < 6; i++) mac[5 - i] = Number((base >> BigInt(8 * i)) & 0xffn);
     const res = await getFile(`../licenses/${hex(await sha256(mac))}.lic`);
     const sig = res ? new Uint8Array(await res.arrayBuffer()) : null;
-    if (sig?.length !== 64) return true;
+    return sig?.length === 64 ? sig : null;
+  }
+  async function sendLicense(ctrl, status) {
+    const sig = await licSig;
+    if (!sig) return true;
     const cmd = new Uint8Array(1 + sig.length);
     cmd[0] = CMD_LICENSE; cmd.set(sig, 1);
-    await ctrl.writeValueWithResponse(cmd);
+    try { await within(ctrl.writeValueWithResponse(cmd)); }
+    catch (error) { if (error.message !== TIMEOUT || linkLost) throw error; }
     return await readStatus(status).errorName === 'OK';
   }
 
