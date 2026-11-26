@@ -1,6 +1,6 @@
 {
   "name": "OneHUD Proxy",
-  "version": "3.0.3",
+  "version": "3.0.4",
   "new_install_prompt_erase": false,
   "builds": [
     {

@@ -1,21 +1,21 @@
 {
   "128": {
     "file": "128.bin",
-    "sha256": "0ecea6b93c86dd9e64386d06844e362c524ac2bfc0d057881a673cdf56bc4a88",
-    "size": 2270352,
-    "version": "3.0.3"
+    "sha256": "1b4682769852f303832ece7358988c7b83acf9c15fa7d0fcffa5ac261c2f08be",
+    "size": 2270448,
+    "version": "3.0.4"
   },
   "18": {
     "file": "18.bin",
-    "sha256": "eea591bb4593496b8129a0446c3a1adc0b87dd3f44294e7fc936c456a5fb59db",
-    "size": 3170736,
-    "version": "3.0.3"
+    "sha256": "c3e2c4c8e2af94274f120a140aef0fe73696329090da45fe5dcade03aa828f3d",
+    "size": 3170832,
+    "version": "3.0.4"
   },
   "c3": {
     "file": "c3.bin",
-    "sha256": "6f05e7e56f08d2544873cbcaacf88c7e0e7e9cc27e87f36220eef2e2369b0b85",
-    "size": 2518736,
-    "version": "3.0.3"
+    "sha256": "b87aa07efcc91905284578fcafade486573e9745e7d9f540882643452a0aad80",
+    "size": 2518864,
+    "version": "3.0.4"
   },
   "proxy": {
     "file": "proxy.bin",
@@ -25,8 +25,8 @@
   },
   "s318": {
     "file": "s318.bin",
-    "sha256": "6c193a33dc45f20e799151e07fceeeb728d796fd11252d677bcb03e692af49a2",
-    "size": 3541904,
-    "version": "3.0.3"
+    "sha256": "ec7243b2bc9135a8994a50e0a8c39b40b6d80a221509b194330b40547d023506",
+    "size": 3542032,
+    "version": "3.0.4"
   }
 }
