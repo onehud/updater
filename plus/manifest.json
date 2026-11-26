@@ -1,5 +1,5 @@
 {
   "name": "OneHUD Plus - Colorful",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "_note": "Version shown on plus/ by deploy.sh. Updates go over OTA: firmware/ota.json, board 128."
 }
