@@ -445,11 +445,10 @@
         if (expected.length && !expected.includes(board)) {
           throw new OtaError(`Sai firmware: HUD đang kết nối là ${BOARD_NAME[board]}, còn trang này cập nhật cho ${namesOf(expected)}. HUD chưa bị thay đổi. Hãy mở trang cập nhật đúng dòng HUD của bạn.`);
         }
-        stage = 'fetch';
-        await fetchFirmware(board);
-        stage = 'enter';
       }
-      const fff5 = await app.getCharacteristic(FFF5);
+      // firmware is fetched once the updater is up: a long download here let Bluefy drop the link before B0 07
+      const live = device.gatt.connected ? app : await (await device.gatt.connect()).getPrimaryService(APP_SVC);
+      const fff5 = await live.getCharacteristic(FFF5);
       try { await fff5.writeValueWithResponse(new Uint8Array([0xb0, 0x07])); }
       catch { }
       if (device.gatt.connected) device.gatt.disconnect();
