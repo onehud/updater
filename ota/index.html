@@ -148,6 +148,11 @@
   .unsupported h2 { font-size:18px; font-weight:600; }
   .unsupported p { font-size:14px; color:var(--muted); line-height:1.6; }
   .hint { font-size:13px; color:var(--muted); line-height:1.55; }
+  /* lối phụ: dòng chữ link, tự xuống dòng (nút .btn không xuống dòng sẽ tràn khung) */
+  .usb-entry { background:none; border:0; padding:0; font:inherit; font-size:13px; line-height:1.5; color:var(--muted);
+    text-align:left; text-decoration:underline; text-underline-offset:3px; white-space:normal; cursor:pointer; }
+  .usb-entry:hover { color:var(--accent); }
+  .usb-entry i { margin-right:6px; }
   .board-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
   .board-grid .btn { padding:0 8px; }
   .board-grid .btn[hidden] { display:none; }
@@ -241,7 +246,7 @@
       </div>
       <button id="connect" type="button" class="btn btn-solid"><i class="fab fa-bluetooth-b"></i> <span>Kết nối HUD</span></button>
       <button id="retry" type="button" class="btn btn-primary" hidden><i class="fas fa-rotate-right"></i> Thử lại</button>
-      <button id="usbEntry" type="button" class="btn" hidden><i class="fas fa-plug"></i> Không vào được chế độ cập nhật? Nạp bằng cáp USB</button>
+      <button id="usbEntry" type="button" class="usb-entry" hidden><i class="fas fa-plug"></i> Không vào được chế độ cập nhật? Nạp bằng cáp USB</button>
       <div id="usb" hidden style="display:grid; gap:10px;">
         <p class="hint" id="usbWhy">Firmware trên HUD là bản cũ, chưa cập nhật qua Bluetooth được (HUD chưa bị thay đổi). Nạp một lần bằng cáp USB trên máy tính (Chrome hoặc Edge), sau đó cập nhật qua Bluetooth như bình thường.</p>
         <p class="hint" id="usbPick" hidden>Chọn loại HUD của bạn để nạp:</p>
