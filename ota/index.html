@@ -396,7 +396,7 @@
     setMode('pick', 'Đã kết nối chế độ cập nhật');
   }
   const hasService = (server, uuid) => server.getPrimaryService(uuid).then(() => true, (error) => {
-    if (error.name === 'NotFoundError') return false;
+    if (error.name === 'NotFoundError' || server.connected) return false;   // Bluefy names a missing service differently
     throw error;
   });
 
@@ -464,7 +464,7 @@
       if (error instanceof OtaError) toast(error.message, 'error');
       else if (stage === 'enter' && error.name === 'NotFoundError') {
         offerUsb(found || (expected.length === 1 ? expected[0] : null));
-      } else toast('Không kết nối được. Ngắt kết nối app VietMap với HUD (hoặc đóng app), đứng gần HUD rồi thử lại.', 'error');
+      } else toast(`Không kết nối được (${stage}: ${error.name || 'Error'} ${error.message || ''}). Ngắt kết nối app VietMap với HUD (hoặc đóng app), đứng gần HUD rồi thử lại.`, 'error');
     }
   });
 
