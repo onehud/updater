@@ -407,7 +407,7 @@
     try {
       if (device) device.removeEventListener('gattserverdisconnected', onDisconnected);
       device = await navigator.bluetooth.requestDevice({
-        filters: [{ services: [UPD_SVC] }, { namePrefix: 'OneHUD-' }, { namePrefix: 'VIETMAP_HUD' }, { services: [APP_SVC] }],
+        acceptAllDevices: true, // Bluefy hides HUD under filters; list everything
         optionalServices: [UPD_SVC, APP_SVC],
       });
       device.addEventListener('gattserverdisconnected', onDisconnected);
