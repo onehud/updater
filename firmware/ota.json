@@ -19,9 +19,9 @@
   },
   "proxy": {
     "file": "proxy.bin",
-    "sha256": "284bc4bd3b9dec07325ae4397f17fcf70a860f26ddd3e7978df6534700952218",
-    "size": 1345376,
-    "version": "2.0.1"
+    "sha256": "784795a568a8cc99954af908fd741665db46d01b2f42572b5deeb9fc9761637d",
+    "size": 1345392,
+    "version": "2.1.0"
   },
   "s318": {
     "file": "s318.bin",
