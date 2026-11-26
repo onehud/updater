@@ -268,13 +268,19 @@
   const FFF4 = '0000fff4-0000-1000-8000-00805f9b34fb';
   const FFF5 = '0000fff5-0000-1000-8000-00805f9b34fb';
   const CHUNK = 508, CHUNK_SAFE = 240, PACE = 64, E_OFFSET = 5;
+  // FFF4 v2 (64 B) mang mã board ở byte 2 (settings_wire.h). Firmware cũ (gói v1) chỉ có caps ở byte 1;
+  // từ F-009 caps của 18 trùng 128 nên không dùng caps cho gói v2.
   const BOARD_BY_CAPS = { 0x0d: '128', 0x0e: 'c3', 0x05: '18', 0x02: 's318' };
+  const BOARD_BY_ID = ['128', 'c3', '18', 's318'];
+  const boardOf = (v) => (v.byteLength === 64 && v.getUint8(0) === 2 ? BOARD_BY_ID[v.getUint8(2)] : BOARD_BY_CAPS[v.getUint8(1)]);
   // Tên thương mại. 18 và s318 đều là OneHUD Pro: nạp cáp thì chọn theo chip, cập nhật Bluetooth thì HUD từ chối ảnh sai chip
-  const BOARD_NAME = { 128: 'OneHUD Plus', c3: 'OneHUD', 18: 'OneHUD Pro', s318: 'OneHUD Pro', proxy: 'Bộ proxy' };
-  const namesOf = (boards) => [...new Set(boards.map((b) => BOARD_NAME[b]))].join(' / ');
-  const groupsOf = (boards) => {   // [[tên, [board…]]] theo thứ tự gặp
+  // BOARD_NAME: tên khi đã nhận diện được board. GROUP_NAME: tên dòng máy cho nút chọn / trang (2 bản Pro chung 1 tên)
+  const BOARD_NAME = { 128: 'OneHUD Plus', c3: 'OneHUD', 18: 'OneHUD Pro', s318: 'OneHUD Pro (S)', proxy: 'Bộ proxy' };
+  const GROUP_NAME = { ...BOARD_NAME, s318: 'OneHUD Pro' };
+  const namesOf = (boards) => [...new Set(boards.map((b) => GROUP_NAME[b]))].join(' / ');
+  const groupsOf = (boards) => {   // [[tên dòng máy, [board…]]] theo thứ tự gặp
     const m = new Map();
-    for (const b of boards) m.set(BOARD_NAME[b], [...(m.get(BOARD_NAME[b]) || []), b]);
+    for (const b of boards) m.set(GROUP_NAME[b], [...(m.get(GROUP_NAME[b]) || []), b]);
     return [...m];
   };
   const STATES = ['IDLE', 'RECEIVING', 'DONE', 'ERROR'];
@@ -417,8 +423,7 @@
       const app = await server.getPrimaryService(APP_SVC);
       let hint = 'Chọn file firmware cho HUD của bạn';
       if (manual) {
-        const caps = await app.getCharacteristic(FFF4).then((c) => c.readValue()).then((v) => v.getUint8(1), () => null);
-        const board = BOARD_BY_CAPS[caps];
+        const board = await app.getCharacteristic(FFF4).then((c) => c.readValue()).then(boardOf, () => null);
         found = board;
         if (board) hint = `${BOARD_NAME[board]} · chọn file firmware`;
         $('fileName').textContent = board ? BOARD_NAME[board] : 'Không rõ loại HUD';
@@ -427,7 +432,7 @@
           if (error.name === 'NotFoundError' && expected.join() === 'proxy') return null;
           throw error;
         });
-        const board = fff4 ? BOARD_BY_CAPS[(await fff4.readValue()).getUint8(1)] : 'proxy';
+        const board = fff4 ? boardOf(await fff4.readValue()) : 'proxy';
         if (!board) throw new OtaError('Chưa hỗ trợ cập nhật cho loại HUD này.');
         found = board;
         if (expected.length && !expected.includes(board)) {
@@ -483,8 +488,8 @@
         try { await transfer(server); break; }
         catch (error) {
           if (!(error instanceof OtaError && error.wrongImage && i + 1 < cands.length)) throw error;
-          toast('Bản này không khớp phần cứng HUD, đang thử bản còn lại…', 'info');
-          await fetchFirmware(cands[i + 1]);
+          await fetchFirmware(cands[i + 1]);   // HUD từ chối bản trước vì khác phần cứng: bản này là bản đúng
+          toast('Đã chọn đúng bản firmware cho HUD, đang gửi…', 'info');
         }
       }
       setMode('done', 'Cập nhật xong');
@@ -515,7 +520,11 @@
     await ctrl.writeValueWithResponse(begin);
     let st = parseStatus(await status.readValue());
     if (st.errorName === 'SIG') throw new OtaError(`${UNSIGNED}. HUD chưa bị thay đổi.`);
-    if (st.state !== 1) throw new OtaError(`HUD từ chối gói (BEGIN): ${describe(st)}.`);
+    if (st.state !== 1) {
+      const error = new OtaError(`HUD từ chối gói (BEGIN): ${describe(st)}.`);
+      error.wrongImage = st.errorName === 'SIZE';   // ví dụ gói OneHUD Pro S3 lớn hơn phân vùng của bản ESP32
+      throw error;
+    }
     note = null;
 
     $('status').textContent = 'Đang gửi firmware';
