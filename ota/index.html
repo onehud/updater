@@ -449,7 +449,7 @@
       // firmware is fetched once the updater is up: a long download here let Bluefy drop the link before B0 07
       const live = device.gatt.connected ? app : await (await device.gatt.connect()).getPrimaryService(APP_SVC);
       const fff5 = await live.getCharacteristic(FFF5);
-      try { await fff5.writeValueWithResponse(new Uint8Array([0xb0, 0x07])); }
+      try { await within(fff5.writeValueWithResponse(new Uint8Array([0xb0, 0x07]))); }
       catch { }
       if (device.gatt.connected) device.gatt.disconnect();
       usbBoard = found;
@@ -511,6 +511,19 @@
     }
   }
 
+  // Bluefy (iOS) sometimes never settles a GATT promise: bound each one, re-read status, else use the last notify
+  const TIMEOUT = 'BluefyTimeout';
+  const within = (p, ms = 4000) => Promise.race([p, new Promise((_, no) => setTimeout(() => no(new Error(TIMEOUT)), ms))]);
+  let lastStatus = null;
+  async function readStatus(status) {
+    for (let i = 0; i < 3; i++) {
+      try { return parseStatus(await within(status.readValue())); }
+      catch (error) { if (error.message !== TIMEOUT || linkLost) throw error; }
+    }
+    if (lastStatus) return lastStatus;
+    throw new Error('status read timed out');
+  }
+
   async function transfer(server) {
     linkLost = false;
     const { begin: signed, image } = pkg, total = image.length;
@@ -519,13 +532,14 @@
     const svc = await server.getPrimaryService(UPD_SVC);
     const [ctrl, data, status] = await Promise.all([CTRL, DATA, STATUS].map((u) => svc.getCharacteristic(u)));
     let note = null;
-    status.addEventListener('characteristicvaluechanged', (e) => { note = parseStatus(e.target.value); });
+    lastStatus = null;
+    status.addEventListener('characteristicvaluechanged', (e) => { note = lastStatus = parseStatus(e.target.value); });
     await status.startNotifications();
     licenseOk = await sendLicense(ctrl, status);
     const begin = new Uint8Array(1 + signed.length);
     begin[0] = 0x01; begin.set(signed, 1);
     await ctrl.writeValueWithResponse(begin);
-    let st = parseStatus(await status.readValue());
+    let st = await readStatus(status);
     if (st.errorName === 'SIG') throw new OtaError(`${UNSIGNED}. HUD chưa bị thay đổi.`);
     if (st.state !== 1) {
       const error = new OtaError(`HUD từ chối gói (BEGIN): ${describe(st)}.`);
@@ -549,23 +563,25 @@
       view.setUint32(0, off, true);
       packet.set(image.subarray(off, off + n), 4);
       try {
-        await data.writeValueWithoutResponse(packet.subarray(0, 4 + n));
+        await within(data.writeValueWithoutResponse(packet.subarray(0, 4 + n)));
       } catch (error) {
-        if (linkLost || !device.gatt.connected || chunk === CHUNK_SAFE) throw error;
-        chunk = CHUNK_SAFE; continue;
+        if (error.message === TIMEOUT && !linkLost) sinceRead = PACE;   // a lost chunk is resent after the status read
+        else if (linkLost || !device.gatt.connected || chunk === CHUNK_SAFE) throw error;
+        else { chunk = CHUNK_SAFE; continue; }
       }
       off += n; sent += n;
       if (++sinceRead >= PACE || off === total) {
         sinceRead = 0;
-        st = parseStatus(await status.readValue());
+        st = await readStatus(status);
         if (st.state !== 1) throw new OtaError(`Truyền lỗi: ${describe(st)}.`);
         off = st.received;
         showProgress(off, total, t0, sent);
       }
     }
     $('status').textContent = 'Đang kiểm tra ảnh…';
-    await ctrl.writeValueWithResponse(new Uint8Array([0x02]));
-    st = parseStatus(await status.readValue());
+    try { await within(ctrl.writeValueWithResponse(new Uint8Array([0x02])), 20000); }   // the HUD verifies the image first
+    catch (error) { if (error.message !== TIMEOUT || linkLost) throw error; }
+    st = await readStatus(status);
     if (st.state !== 2) {
       const error = new OtaError(`HUD không nhận ảnh (END): ${describe(st)}.`);
       error.wrongImage = st.errorName === 'IMAGE';   // ví dụ firmware OneHUD Pro bản chip khác
@@ -589,7 +605,7 @@
     const cmd = new Uint8Array(1 + sig.length);
     cmd[0] = CMD_LICENSE; cmd.set(sig, 1);
     await ctrl.writeValueWithResponse(cmd);
-    return parseStatus(await status.readValue()).errorName === 'OK';
+    return await readStatus(status).errorName === 'OK';
   }
 
   $('exit').addEventListener('click', async () => {
