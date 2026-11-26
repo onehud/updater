@@ -261,7 +261,7 @@
   <p id="notice" class="notice" role="status" aria-live="polite" aria-atomic="true"></p>
 </main>
 
-<footer>&copy; <span id="currentYear"></span> OneHUD Team</footer>
+<footer>&copy; <span id="currentYear"></span> OneHUD Team · <span id="build"></span></footer>
 
 <script type="module">
   import { loadPackage, sha256, UNSIGNED } from './package.js';
@@ -273,7 +273,10 @@
   const APP_SVC = '0000fff0-0000-1000-8000-00805f9b34fb';
   const FFF4 = '0000fff4-0000-1000-8000-00805f9b34fb';
   const FFF5 = '0000fff5-0000-1000-8000-00805f9b34fb';
-  const CHUNK = 508, CHUNK_SAFE = 240, PACE = 64, E_OFFSET = 5;
+  // iOS (Bluefy) runs ATT MTU 185 and silently cuts larger write-without-response packets: 185 - 3 ATT - 4 offset
+  const IOS = /iPhone|iPad|iPod|Bluefy/.test(navigator.userAgent);
+  const CHUNK = IOS ? 178 : 508, CHUNK_SAFE = IOS ? 100 : 240, PACE = 64, E_OFFSET = 5;
+  const BUILD = 'ota-2026-11-26c';
   // FFF4 v2 (64 B) mang mã board ở byte 2 (settings_wire.h). Firmware cũ (gói v1) chỉ có caps ở byte 1;
   // từ F-009 caps của 18 trùng 128 nên không dùng caps cho gói v2.
   const BOARD_BY_CAPS = { 0x0d: '128', 0x0e: 'c3', 0x05: '18', 0x02: 's318' };
@@ -307,6 +310,7 @@
   let atUpdater = false;
   let usbBoard = null, pkgBoard = null, licSig = Promise.resolve(null);
   $('currentYear').textContent = new Date().getFullYear();
+  $('build').textContent = `${BUILD}${IOS ? ' · iOS' : ''}`;
 
   const toast = (message, tone = 'info') => { $('notice').textContent = message; $('notice').dataset.tone = tone; };
   const kb = (n) => `${(n / 1024).toFixed(n < 10240 ? 1 : 0)} KB`;
