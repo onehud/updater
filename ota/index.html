@@ -276,7 +276,7 @@
   // iOS (Bluefy) runs ATT MTU 185 and silently cuts larger write-without-response packets: 185 - 3 ATT - 4 offset
   const IOS = /iPhone|iPad|iPod|Bluefy/.test(navigator.userAgent);
   const CHUNK = IOS ? 178 : 508, CHUNK_SAFE = IOS ? 100 : 240, PACE = 64, E_OFFSET = 5;
-  const BUILD = 'ota-2026-11-26c';
+  const BUILD = 'ota-2026-11-26d';
   // FFF4 v2 (64 B) mang mã board ở byte 2 (settings_wire.h). Firmware cũ (gói v1) chỉ có caps ở byte 1;
   // từ F-009 caps của 18 trùng 128 nên không dùng caps cho gói v2.
   const BOARD_BY_CAPS = { 0x0d: '128', 0x0e: 'c3', 0x05: '18', 0x02: 's318' };
@@ -577,7 +577,7 @@
       view.setUint32(0, off, true);
       packet.set(image.subarray(off, off + n), 4);
       try {
-        await within(data.writeValueWithoutResponse(packet.subarray(0, 4 + n)));
+        await within(data.writeValueWithoutResponse(packet.slice(0, 4 + n)));   // a copy: Bluefy sends a view's whole buffer
       } catch (error) {
         if (error.message === TIMEOUT && !linkLost) sinceRead = PACE;   // a lost chunk is resent after the status read
         else if (linkLost || !device.gatt.connected || chunk === CHUNK_SAFE) throw error;

@@ -780,7 +780,7 @@
     while (off < total) {
       const n = Math.min(chunk, total - off);
       pv.setUint32(1, off, true); packet.set(file.subarray(off, off + n), 5);
-      try { await gifChr.writeValueWithoutResponse(packet.subarray(0, 5 + n)); }
+      try { await gifChr.writeValueWithoutResponse(packet.slice(0, 5 + n)); }   // a copy: Bluefy sends a view's whole buffer
       catch (error) { if (!device.gatt.connected || ci === CHUNKS.length - 1) throw error; chunk = CHUNKS[++ci]; continue; }
       off += n;
       if (++count % 8 === 0 || off === total) {
