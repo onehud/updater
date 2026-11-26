@@ -212,11 +212,10 @@
       <div id="boards" hidden style="display:grid; gap:10px;">
         <p class="hint">HUD đang ở chế độ cập nhật nên không tự nhận ra loại HUD. Chọn loại HUD của bạn:</p>
         <div class="board-grid">
-          <button type="button" class="btn btn-primary" data-board="128">1.28" ESP32</button>
-          <button type="button" class="btn btn-primary" data-board="c3">1.28" C3</button>
-          <button type="button" class="btn btn-primary" data-board="18">1.8" ESP32</button>
-          <button type="button" class="btn btn-primary" data-board="s318">1.8" ESP32-S3</button>
-          <button type="button" class="btn btn-primary" data-board="proxy">Bộ proxy</button>
+          <button type="button" class="btn btn-primary" data-boards="c3">OneHUD</button>
+          <button type="button" class="btn btn-primary" data-boards="128">OneHUD Plus</button>
+          <button type="button" class="btn btn-primary" data-boards="18,s318">OneHUD Pro</button>
+          <button type="button" class="btn btn-primary" data-boards="proxy">Bộ proxy</button>
         </div>
       </div>
     </div>
@@ -270,7 +269,14 @@
   const FFF5 = '0000fff5-0000-1000-8000-00805f9b34fb';
   const CHUNK = 508, CHUNK_SAFE = 240, PACE = 64, E_OFFSET = 5;
   const BOARD_BY_CAPS = { 0x0d: '128', 0x0e: 'c3', 0x05: '18', 0x02: 's318' };
-  const BOARD_NAME = { 128: '1.28" ESP32', c3: '1.28" ESP32-C3', 18: '1.8" ESP32', s318: '1.8" ESP32-S3', proxy: 'Bộ proxy' };
+  // Tên thương mại. 18 và s318 đều là OneHUD Pro: nạp cáp thì chọn theo chip, cập nhật Bluetooth thì HUD từ chối ảnh sai chip
+  const BOARD_NAME = { 128: 'OneHUD Plus', c3: 'OneHUD', 18: 'OneHUD Pro', s318: 'OneHUD Pro', proxy: 'Bộ proxy' };
+  const namesOf = (boards) => [...new Set(boards.map((b) => BOARD_NAME[b]))].join(' / ');
+  const groupsOf = (boards) => {   // [[tên, [board…]]] theo thứ tự gặp
+    const m = new Map();
+    for (const b of boards) m.set(BOARD_NAME[b], [...(m.get(BOARD_NAME[b]) || []), b]);
+    return [...m];
+  };
   const STATES = ['IDLE', 'RECEIVING', 'DONE', 'ERROR'];
   const ERRORS = ['OK', 'HEADER', 'SIZE', 'FLAGS', 'STATE', 'OFFSET', 'LEN', 'INCOMPLETE', 'SHA', 'IMAGE', 'FLASH', 'SIG'];
   const CMD_EXIT = 0x04, CMD_LICENSE = 0x05;
@@ -339,16 +345,16 @@
   const getFile = (path) => fetch(path, { cache: 'no-cache' }).then((res) => (res.ok ? res : null), () => null);
   async function fetchFirmware(board) {
     const name = BOARD_NAME[board];
-    $('fileName').textContent = `HUD ${name}`;
+    $('fileName').textContent = name;
     $('fileInfo').textContent = 'Đang tải firmware…';
     const index = await (await getFile('../firmware/ota.json'))?.json().catch(() => null);
     if (!index) throw new OtaError('Chưa tải được danh sách firmware (firmware/ota.json). Kiểm tra mạng rồi thử lại.');
     const rel = index[board];
-    if (!rel?.file || !rel.sha256) throw new OtaError(`Chưa có bản cập nhật cho HUD ${name}.`);
-    $('fileName').textContent = `HUD ${name} · v${rel.version}`;
+    if (!rel?.file || !rel.sha256) throw new OtaError(`Chưa có bản cập nhật cho ${name}.`);
+    $('fileName').textContent = `${name} · v${rel.version}`;
     const res = await getFile(`../firmware/${rel.file}`);
-    if (!res) throw new OtaError(`Chưa tải được firmware v${rel.version} cho HUD ${name} (firmware/${rel.file}). Kiểm tra mạng rồi thử lại.`);
-    await usePackage(`v${rel.version} · HUD ${name}`, new Uint8Array(await res.arrayBuffer()));
+    if (!res) throw new OtaError(`Chưa tải được firmware v${rel.version} cho ${name} (firmware/${rel.file}). Kiểm tra mạng rồi thử lại.`);
+    await usePackage(`v${rel.version} · ${name}`, new Uint8Array(await res.arrayBuffer()));
     if (pkg.image.length !== rel.size || hex(pkg.header.subarray(16, 48)) !== rel.sha256.toLowerCase()) {
       pkg = null; $('fileIcon').classList.remove('ready');
       throw new OtaError(`File firmware v${rel.version} tải về bị hỏng hoặc trang đang được cập nhật. Thử lại sau ít phút.`);
@@ -398,11 +404,11 @@
       if (await hasService(server, UPD_SVC)) {
         atUpdater = true;
         if (manual) return askForFile('Chọn file firmware cho HUD của bạn');
-        const known = expected.length === 1 ? expected[0] : usbBoard;
-        if (known) {
+        const cands = usbBoard ? [usbBoard] : (expected.length && groupsOf(expected).length === 1 ? expected : null);
+        if (cands) {
           stage = 'fetch';
-          await fetchFirmware(known);
-          return run(server);
+          await fetchFirmware(cands[0]);
+          return run(server, cands);
         }
         setMode('board', 'Đã kết nối chế độ cập nhật');
         return;
@@ -414,8 +420,8 @@
         const caps = await app.getCharacteristic(FFF4).then((c) => c.readValue()).then((v) => v.getUint8(1), () => null);
         const board = BOARD_BY_CAPS[caps];
         found = board;
-        if (board) hint = `HUD ${BOARD_NAME[board]} · chọn file firmware`;
-        $('fileName').textContent = board ? `HUD ${BOARD_NAME[board]}` : 'Không rõ loại HUD';
+        if (board) hint = `${BOARD_NAME[board]} · chọn file firmware`;
+        $('fileName').textContent = board ? BOARD_NAME[board] : 'Không rõ loại HUD';
       } else {
         const fff4 = await app.getCharacteristic(FFF4).catch((error) => {
           if (error.name === 'NotFoundError' && expected.join() === 'proxy') return null;
@@ -425,7 +431,7 @@
         if (!board) throw new OtaError('Chưa hỗ trợ cập nhật cho loại HUD này.');
         found = board;
         if (expected.length && !expected.includes(board)) {
-          throw new OtaError(`Sai firmware: HUD đang kết nối là loại ${BOARD_NAME[board]}, còn trang này cập nhật cho ${expected.map((b) => BOARD_NAME[b]).join(' / ')}. HUD chưa bị thay đổi. Hãy mở trang cập nhật đúng dòng HUD của bạn.`);
+          throw new OtaError(`Sai firmware: HUD đang kết nối là ${BOARD_NAME[board]}, còn trang này cập nhật cho ${namesOf(expected)}. HUD chưa bị thay đổi. Hãy mở trang cập nhật đúng dòng HUD của bạn.`);
         }
         stage = 'fetch';
         await fetchFirmware(board);
@@ -449,11 +455,12 @@
     }
   });
 
-  document.querySelectorAll('[data-board]').forEach((btn) => btn.addEventListener('click', async () => {
+  document.querySelectorAll('[data-boards]').forEach((btn) => btn.addEventListener('click', async () => {
     setMode('connecting', 'Đang tải firmware…'); toast('');
     try {
-      await fetchFirmware(btn.dataset.board);
-      await run(device.gatt.connected ? device.gatt : await device.gatt.connect());
+      const cands = btn.dataset.boards.split(',');
+      await fetchFirmware(cands[0]);
+      await run(device.gatt.connected ? device.gatt : await device.gatt.connect(), cands);
     } catch (error) {
       setMode('board', 'Đã kết nối chế độ cập nhật');
       toast(error instanceof OtaError ? error.message : 'Mất kết nối HUD. Bấm Kết nối HUD để thử lại.', 'error');
@@ -467,12 +474,19 @@
     catch { setMode('idle', 'Chưa kết nối'); toast('Không kết nối lại được. Bấm Kết nối HUD và chọn OneHUD-….', 'error'); }
   });
 
-  async function run(server) {
+  async function run(server, cands = []) {
     $('statusSub').textContent = device.name || 'OneHUD';
     let wake = null;
     try { wake = await navigator.wakeLock?.request('screen'); } catch { }
     try {
-      await transfer(server);
+      for (let i = 0; ; i++) {
+        try { await transfer(server); break; }
+        catch (error) {
+          if (!(error instanceof OtaError && error.wrongImage && i + 1 < cands.length)) throw error;
+          toast('Bản này không khớp phần cứng HUD, đang thử bản còn lại…', 'info');
+          await fetchFirmware(cands[i + 1]);
+        }
+      }
       setMode('done', 'Cập nhật xong');
     } catch (error) {
       const lost = linkLost || !device.gatt.connected;
@@ -536,7 +550,11 @@
     $('status').textContent = 'Đang kiểm tra ảnh…';
     await ctrl.writeValueWithResponse(new Uint8Array([0x02]));
     st = parseStatus(await status.readValue());
-    if (st.state !== 2) throw new OtaError(`HUD không nhận ảnh (END): ${describe(st)}.`);
+    if (st.state !== 2) {
+      const error = new OtaError(`HUD không nhận ảnh (END): ${describe(st)}.`);
+      error.wrongImage = st.errorName === 'IMAGE';   // ví dụ firmware OneHUD Pro bản chip khác
+      throw error;
+    }
     showProgress(total, total, t0, sent);
     toast(licenseOk ? 'Đã cập nhật xong, chúc bạn vui vẻ'
       : 'Đã cập nhật xong, nhưng HUD chưa được kích hoạt: nếu HUD báo chưa được cấp phép, hãy liên hệ người bán.', 'ok');
@@ -583,22 +601,22 @@
 
   function offerUsb(board) {
     usbBoard = null;
-    const boards = board ? [board] : (expected.length ? expected : Object.keys(BOARD_NAME));
-    $('usbPick').hidden = boards.length === 1;
-    $('usbFlash').hidden = boards.length !== 1;
-    $('usbFlash').dataset.board = boards[0];
-    $('usbBoards').replaceChildren(...(boards.length === 1 ? [] : boards.map((b) => {
+    const groups = groupsOf(board ? [board] : (expected.length ? expected : Object.keys(BOARD_NAME)));
+    $('usbPick').hidden = groups.length === 1;
+    $('usbFlash').hidden = groups.length !== 1;
+    $('usbFlash').dataset.boards = groups[0][1].join(',');
+    $('usbBoards').replaceChildren(...(groups.length === 1 ? [] : groups.map(([name, bs]) => {
       const btn = document.createElement('button');
-      btn.type = 'button'; btn.className = 'btn btn-primary'; btn.textContent = BOARD_NAME[b];
-      btn.addEventListener('click', () => flashUsb(b));
+      btn.type = 'button'; btn.className = 'btn btn-primary'; btn.textContent = name;
+      btn.addEventListener('click', () => flashUsb(bs));
       return btn;
     })));
     setMode('usb', 'Firmware HUD là bản cũ');
     toast('HUD đang chạy firmware cũ, chưa có chế độ cập nhật qua Bluetooth. Nạp bằng cáp USB một lần.', 'error');
   }
-  $('usbFlash').addEventListener('click', () => flashUsb($('usbFlash').dataset.board));
+  $('usbFlash').addEventListener('click', () => flashUsb($('usbFlash').dataset.boards.split(',')));
 
-  async function flashUsb(board) {
+  async function flashUsb(cands) {
     if (!('serial' in navigator)) {
       toast('Nạp bằng cáp cần Chrome hoặc Edge trên máy tính (Web Serial).', 'error');
       return;
@@ -609,16 +627,17 @@
     } catch { return; }
     setMode('flashing', 'Đang nạp bằng cáp USB…'); toast('');
     try {
-      const res = await getFile(`../firmware/${board}_boot.bin`);
-      if (!res) throw new OtaError(`Chưa tải được ảnh nạp cáp cho HUD ${BOARD_NAME[board]} (firmware/${board}_boot.bin). Kiểm tra mạng rồi thử lại.`);
-      const img = new Uint8Array(await res.arrayBuffer());
       const { ESPLoader, Transport } = await import(ESPTOOL);
       transport = new Transport(port, true);
       const quiet = { clean() {}, writeLine() {}, write() {} };
       const loader = new ESPLoader({ transport, baudrate: 460800, terminal: quiet, enableTracing: false });
       await loader.main();
       const chip = loader.chip?.CHIP_NAME;
-      if (chip !== CHIP_OF[board]) throw new OtaError(`HUD đang cắm cáp dùng chip ${chip || 'không rõ'}, không phải HUD ${BOARD_NAME[board]}. HUD chưa bị thay đổi.`);
+      const board = cands.find((b) => CHIP_OF[b] === chip);   // OneHUD Pro: 2 bản, chọn theo chip
+      if (!board) throw new OtaError(`Thiết bị đang cắm cáp không phải ${namesOf(cands)}. HUD chưa bị thay đổi.`);
+      const res = await getFile(`../firmware/${board}_boot.bin`);
+      if (!res) throw new OtaError(`Chưa tải được ảnh nạp cáp cho ${BOARD_NAME[board]} (firmware/${board}_boot.bin). Kiểm tra mạng rồi thử lại.`);
+      const img = new Uint8Array(await res.arrayBuffer());
       const t0 = performance.now();
       await loader.writeFlash({
         fileArray: [{ data: loader.ui8ToBstr(img), address: 0 }],
@@ -655,8 +674,8 @@
       $('fileName').textContent = 'Kết nối HUD trước';
       $('fileInfo').textContent = 'Sau khi kết nối mới chọn file .bin';
     } else if (expected.length) {
-      $('fileName').textContent = `HUD ${expected.map((b) => BOARD_NAME[b]).join(' / ')}`;
-      document.querySelectorAll('[data-board]').forEach((btn) => { btn.hidden = !expected.includes(btn.dataset.board); });
+      $('fileName').textContent = namesOf(expected);
+      document.querySelectorAll('[data-boards]').forEach((btn) => { btn.hidden = !btn.dataset.boards.split(',').some((b) => expected.includes(b)); });
     }
     setMode('idle');
   }
