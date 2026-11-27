@@ -146,3 +146,95 @@ export function encode({ frames, srcW, srcH }, { canvas, maxBytes, maxFrames = 6
   }
   throw new Error(TOO_BIG);
 }
+
+// GIF decoder for browsers without ImageDecoder (WebKit: Bluefy on iOS).
+// Calls onFrame(rgba, delay_ms, width, height) for at most maxFrames evenly picked frames, composited at screen size;
+// each keeps the time of the frames it replaces. Only one frame copy is held at a time.
+export function decodeGif(bytes, onFrame, maxFrames = 64) {
+  const b = bytes, bad = () => { throw new Error('Không đọc được ảnh GIF.'); };
+  if (b.length < 13 || b[0] !== 0x47 || b[1] !== 0x49 || b[2] !== 0x46) bad();
+  const W = b[6] | b[7] << 8, H = b[8] | b[9] << 8;
+  if (!W || !H) bad();
+  let p = 13;
+  const table = (flags) => { const t = b.subarray(p, p + 3 * (2 << (flags & 7))); p += t.length; return t; };
+  const gct = b[10] & 0x80 ? table(b[10]) : null;
+  const blocks = () => { const parts = []; while (p < b.length && b[p]) { parts.push(b.subarray(p + 1, p + 1 + b[p])); p += 1 + b[p]; } p++; return parts; };
+  // Pass 1: frame descriptors (LZW data stays in place)
+  const metas = [];
+  let gce = { delay: 0, disposal: 0, trans: -1 };
+  while (p < b.length && b[p] !== 0x3B) {
+    const tag = b[p++];
+    if (tag === 0x21) {
+      const label = b[p++];
+      if (label === 0xF9 && b[p] >= 4) gce = { delay: b[p + 2] | b[p + 3] << 8, disposal: b[p + 1] >> 2 & 7, trans: b[p + 1] & 1 ? b[p + 4] : -1 };
+      blocks();
+    } else if (tag === 0x2C) {
+      const x = b[p] | b[p + 1] << 8, y = b[p + 2] | b[p + 3] << 8, w = b[p + 4] | b[p + 5] << 8, h = b[p + 6] | b[p + 7] << 8, f = b[p + 8];
+      p += 9;
+      const pal = f & 0x80 ? table(f) : gct;
+      const minCode = b[p++];
+      metas.push({ x, y, w, h, interlaced: !!(f & 0x40), pal, minCode, data: blocks(), ...gce });
+      gce = { delay: 0, disposal: 0, trans: -1 };
+    } else bad();
+  }
+  if (!metas.length) bad();
+  const n = metas.length, k = Math.min(n, maxFrames);
+  let pending = null;
+  const canvas = new Uint8ClampedArray(W * H * 4);
+  const idx = new Uint8Array(W * H);
+  let next = 0;
+  for (let i = 0; i < n; i++) {
+    const m = metas[i];
+    const saved = m.disposal === 3 ? canvas.slice() : null;
+    if (m.pal && m.minCode >= 1 && m.minCode <= 11) {
+      const count = lzw(m, idx);
+      const rows = m.interlaced ? interlaceRows(m.h) : null;
+      for (let j = 0; j < count; j++) {
+        const c = idx[j];
+        if (c === m.trans || 3 * c + 2 >= m.pal.length) continue;
+        const r = Math.floor(j / m.w), fy = m.y + (rows ? rows[r] : r), fx = m.x + j % m.w;
+        if (fx >= W || fy >= H) continue;
+        const o = (fy * W + fx) * 4;
+        canvas[o] = m.pal[3 * c]; canvas[o + 1] = m.pal[3 * c + 1]; canvas[o + 2] = m.pal[3 * c + 2]; canvas[o + 3] = 255;
+      }
+    }
+    const delay = m.delay * 10 > 10 ? m.delay * 10 : 100;
+    if (i === Math.floor(next * n / k)) { if (pending) onFrame(pending.rgba, pending.delay, W, H); pending = { rgba: canvas.slice(), delay }; next++; }
+    else pending.delay += delay;
+    if (m.disposal === 2) for (let y = m.y; y < Math.min(H, m.y + m.h); y++) canvas.fill(0, (y * W + m.x) * 4, (y * W + Math.min(W, m.x + m.w)) * 4);
+    else if (saved) canvas.set(saved);
+  }
+  onFrame(pending.rgba, pending.delay, W, H);
+}
+
+function interlaceRows(h) {
+  const rows = [];
+  for (const [s, d] of [[0, 8], [4, 8], [2, 4], [1, 2]]) for (let y = s; y < h; y += d) rows.push(y);
+  return rows;
+}
+
+// LZW-decode one frame's indices into out (at most w*h); returns how many were written
+function lzw({ minCode, data, w, h }, out) {
+  const max = Math.min(out.length, w * h), clear = 1 << minCode, end = clear + 1;
+  const prefix = new Uint16Array(4096), suffix = new Uint8Array(4096), stack = new Uint8Array(4097);
+  let size = minCode + 1, avail = clear + 2, old = -1, first = 0, bits = 0, acc = 0, n = 0;
+  for (const part of data) for (let q = 0; q < part.length; q++) {
+    acc |= part[q] << bits; bits += 8;
+    while (bits >= size) {
+      const code = acc & ((1 << size) - 1);
+      acc >>>= size; bits -= size;
+      if (code === clear) { size = minCode + 1; avail = clear + 2; old = -1; continue; }
+      if (code === end) return n;
+      if (old < 0) { if (code >= clear) return n; out[n++] = first = code; old = code; if (n >= max) return n; continue; }
+      let c = code, sp = 0;
+      if (code >= avail) { if (code > avail) return n; stack[sp++] = first; c = old; }
+      while (c >= clear) { stack[sp++] = suffix[c]; c = prefix[c]; }
+      stack[sp++] = first = c;
+      if (avail < 4096) { prefix[avail] = old; suffix[avail] = first; avail++; if (avail === 1 << size && size < 12) size++; }
+      while (sp && n < max) out[n++] = stack[--sp];
+      if (n >= max) return n;
+      old = code;
+    }
+  }
+  return n;
+}

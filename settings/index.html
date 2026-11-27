@@ -417,7 +417,7 @@
 
 <script type="module">
   import { pack, unpack, CAP, SLOTS, RANGES, SPEED_OFFSET_MIN, SPEED_OFFSET_MAX } from './wire.js';
-  import { encode, crc32 } from './oha.js';
+  import { encode, crc32, decodeGif } from './oha.js';
   const SVC = '0000fff0-0000-1000-8000-00805f9b34fb';
   const CHR = '0000fff4-0000-1000-8000-00805f9b34fb';
   const GIF = '0000fff6-0000-1000-8000-00805f9b34fb';
@@ -668,14 +668,22 @@
       ctx.drawImage(image, 0, 0, dw, dh);
       out.push({ data: ctx.getImageData(0, 0, dw, dh), delay_ms });
     };
-    if (file.type !== 'image/gif') {
+    const sig = new Uint8Array(await file.slice(0, 3).arrayBuffer());   // by content: iOS may give no or wrong type
+    if (String.fromCharCode(...sig) !== 'GIF') {
       const bmp = await createImageBitmap(file);
       add(bmp, bmp.width, bmp.height, 1000);
       bmp.close();
       return out;
     }
-    if (!('ImageDecoder' in window)) throw new Error('Trình duyệt chưa hỗ trợ đọc GIF, hãy dùng Chrome');
-    const dec = new ImageDecoder({ data: await file.arrayBuffer(), type: file.type });
+    if (!('ImageDecoder' in window)) {   // WebKit (Bluefy): own decoder, frames already composited
+      decodeGif(new Uint8Array(await file.arrayBuffer()), (rgba, delay, w, h) => {
+        const c = new OffscreenCanvas(w, h);
+        c.getContext('2d').putImageData(new ImageData(rgba, w, h), 0, 0);
+        add(c, w, h, delay);
+      });
+      return out;
+    }
+    const dec = new ImageDecoder({ data: await file.arrayBuffer(), type: 'image/gif' });
     try {
       await dec.tracks.ready;
       const n = dec.tracks.selectedTrack.frameCount, k = Math.min(n, 64);
@@ -775,7 +783,7 @@
     if (st.state !== 1 || st.error) throw new Error();
     const packet = new Uint8Array(5 + 239), pv = new DataView(packet.buffer);
     packet[0] = 0x02;
-    const CHUNKS = [239, 180, 100, 15];
+    const CHUNKS = /iPhone|iPad|iPod|Bluefy/.test(navigator.userAgent) ? [177, 100, 15] : [239, 180, 100, 15];   // iOS ATT MTU 185: 5-byte header + 177
     let off = 0, ci = 0, chunk = CHUNKS[0], count = 0, resumes = 0, prev = 0;
     while (off < total) {
       const n = Math.min(chunk, total - off);
